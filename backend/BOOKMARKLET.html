@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<title>Tạo nút lấy Transcript YouTube</title>
+<style>
+  body { font-family: system-ui, -apple-system, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 20px; line-height: 1.6; color: #1a1a2e; }
+  h1 { font-size: 22px; }
+  .step { background: #f4f6fb; border-radius: 12px; padding: 16px 20px; margin: 16px 0; }
+  .step b { color: #4338ca; }
+  label { display: block; margin-top: 10px; font-weight: 600; font-size: 14px; }
+  input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; margin-top: 4px; font-size: 14px; box-sizing: border-box; }
+  #bookmarklet-link {
+    display: inline-block; margin-top: 16px; padding: 12px 22px; background: #4338ca; color: #fff;
+    border-radius: 999px; font-weight: 700; text-decoration: none; cursor: grab;
+  }
+  #bookmarklet-link:hover { background: #3730a3; }
+  .warn { color: #b91c1c; font-size: 13px; margin-top: 6px; }
+  code { background: #eee; padding: 2px 6px; border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<h1>📝 Tạo nút "Lưu transcript" cho video YouTube</h1>
+<p>Công cụ này tạo ra 1 nút bookmark (đánh dấu trang) kéo được vào thanh bookmark của trình duyệt.
+Sau đó mỗi khi soạn bài cho video mới, chỉ cần <b>mở video đó trên YouTube rồi bấm nút này</b> —
+không cần cài gì, không cần gõ lệnh.</p>
+
+<div class="step">
+  <b>Bước 1</b> — Điền thông tin backend đã deploy trên Render:
+  <label>Backend URL (link Render của bạn)</label>
+  <input id="backendUrl" placeholder="https://ten-app-cua-ban.onrender.com" />
+
+  <label>Mã bí mật PREFETCH_TOKEN (đã set trong Environment Variables trên Render)</label>
+  <input id="token" placeholder="vd: abc123xyz" />
+</div>
+
+<div class="step">
+  <b>Bước 2</b> — Kéo nút bên dưới vào <b>thanh bookmark</b> của trình duyệt (nếu chưa thấy thanh
+  bookmark, bấm <code>Ctrl/Cmd + Shift + B</code> để hiện ra):
+  <br /><br />
+  <a id="bookmarklet-link" href="#">📝 Lưu transcript</a>
+  <div class="warn">Nút chỉ hoạt động sau khi bạn điền đủ 2 ô ở Bước 1 phía trên.</div>
+</div>
+
+<div class="step">
+  <b>Bước 3</b> — Cách dùng hằng ngày:
+  <ol>
+    <li>Mở video muốn soạn bài trực tiếp trên youtube.com (không phải trong app web của bạn).</li>
+    <li>Đợi video load xong, bấm vào nút <b>📝 Lưu transcript</b> trên thanh bookmark.</li>
+    <li>Thấy thông báo "Đã lưu" là xong. Giờ vào web soạn bài chọn đúng video đó là dùng được luôn.</li>
+  </ol>
+</div>
+
+<script>
+function buildBookmarklet(backendUrl, token) {
+  const code = `
+    (function(){
+      function getPR(){
+        if (window.ytInitialPlayerResponse) return window.ytInitialPlayerResponse;
+        var scripts = document.getElementsByTagName('script');
+        for (var i=0;i<scripts.length;i++){
+          var t = scripts[i].textContent || '';
+          var idx = t.indexOf('ytInitialPlayerResponse');
+          if (idx === -1) continue;
+          var eq = t.indexOf('{', idx);
+          if (eq === -1) continue;
+          var depth = 0, j = eq;
+          for (; j < t.length; j++) {
+            if (t[j] === '{') depth++;
+            else if (t[j] === '}') { depth--; if (depth === 0) { j++; break; } }
+          }
+          try { return JSON.parse(t.slice(eq, j)); } catch(e) {}
+        }
+        return null;
+      }
+      function decodeEntities(s){
+        return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
+                .replace(/&quot;/g,'"').replace(/&#39;/g,"'")
+                .replace(/&#x([0-9a-fA-F]+);/g, function(_,h){ return String.fromCodePoint(parseInt(h,16)); })
+                .replace(/&#(\\d+);/g, function(_,d){ return String.fromCodePoint(parseInt(d,10)); });
+      }
+      var pr = getPR();
+      if (!pr) { alert('Không đọc được dữ liệu video. Hãy chắc chắn bạn đang ở đúng trang xem video trên youtube.com.'); return; }
+      var tracks = pr.captions && pr.captions.playerCaptionsTracklistRenderer && pr.captions.playerCaptionsTracklistRenderer.captionTracks;
+      if (!tracks || !tracks.length) { alert('Video này không có transcript/phụ đề.'); return; }
+      var track = tracks.find(function(t){ return (t.languageCode||'').indexOf('en') === 0; }) || tracks[0];
+      var videoId = pr.videoDetails && pr.videoDetails.videoId;
+      var videoUrl = 'https://www.youtube.com/watch?v=' + videoId;
+      fetch(track.baseUrl).then(function(r){ return r.text(); }).then(function(xml){
+        var re = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\\/text>/g;
+        var m, parts = [];
+        while ((m = re.exec(xml)) !== null) {
+          parts.push('[' + Math.floor(parseFloat(m[1])) + 's] ' + decodeEntities(m[3]));
+        }
+        var transcript = parts.join(' ');
+        if (!transcript) { alert('Không đọc được nội dung transcript.'); return; }
+        return fetch(${JSON.stringify(backendUrl)} + '/api/videos/cache-transcript', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-prefetch-token': ${JSON.stringify(token)} },
+          body: JSON.stringify({ url: videoUrl, hasTranscript: true, transcript: transcript })
+        }).then(function(r){ return r.json(); }).then(function(data){
+          if (data.ok) alert('✅ Đã lưu transcript cho video: ' + videoId);
+          else alert('❌ Lỗi: ' + (data.error || 'không rõ'));
+        });
+      }).catch(function(e){ alert('❌ Lỗi: ' + e.message); });
+    })();
+  `;
+  return 'javascript:' + encodeURIComponent(code);
+}
+
+function update() {
+  const backendUrl = document.getElementById('backendUrl').value.trim().replace(/\/$/, '');
+  const token = document.getElementById('token').value.trim();
+  const link = document.getElementById('bookmarklet-link');
+  if (backendUrl && token) {
+    link.href = buildBookmarklet(backendUrl, token);
+  } else {
+    link.href = '#';
+  }
+}
+document.getElementById('backendUrl').addEventListener('input', update);
+document.getElementById('token').addEventListener('input', update);
+</script>
+
+</body>
+</html>
