@@ -56,23 +56,47 @@ không cần cài gì, không cần gõ lệnh.</p>
 function buildBookmarklet(backendUrl, token) {
   const code = `
     (function(){
-      function getPR(){
-        if (window.ytInitialPlayerResponse) return window.ytInitialPlayerResponse;
-        var scripts = document.getElementsByTagName('script');
-        for (var i=0;i<scripts.length;i++){
-          var t = scripts[i].textContent || '';
-          var idx = t.indexOf('ytInitialPlayerResponse');
-          if (idx === -1) continue;
-          var eq = t.indexOf('{', idx);
-          if (eq === -1) continue;
-          var depth = 0, j = eq;
-          for (; j < t.length; j++) {
-            if (t[j] === '{') depth++;
-            else if (t[j] === '}') { depth--; if (depth === 0) { j++; break; } }
+      function extractVideoId(){
+        var m = location.href.match(/[?&]v=([\\w-]{11})/) ||
+                location.href.match(/youtu\\.be\\/([\\w-]{11})/) ||
+                location.href.match(/shorts\\/([\\w-]{11})/);
+        return m ? m[1] : null;
+      }
+      function getTracksFromPageData(){
+        try {
+          var pr = window.ytInitialPlayerResponse;
+          if (!pr) {
+            var scripts = document.getElementsByTagName('script');
+            for (var i=0;i<scripts.length;i++){
+              var t = scripts[i].textContent || '';
+              var idx = t.indexOf('ytInitialPlayerResponse');
+              if (idx === -1) continue;
+              var eq = t.indexOf('{', idx);
+              if (eq === -1) continue;
+              var depth = 0, j = eq;
+              for (; j < t.length; j++) {
+                if (t[j] === '{') depth++;
+                else if (t[j] === '}') { depth--; if (depth === 0) { j++; break; } }
+              }
+              try { pr = JSON.parse(t.slice(eq, j)); break; } catch(e) {}
+            }
           }
-          try { return JSON.parse(t.slice(eq, j)); } catch(e) {}
-        }
-        return null;
+          return pr && pr.captions && pr.captions.playerCaptionsTracklistRenderer &&
+                 pr.captions.playerCaptionsTracklistRenderer.captionTracks || null;
+        } catch(e) { return null; }
+      }
+      function getTracksViaInnerTube(videoId){
+        return fetch('https://www.youtube.com/youtubei/v1/player?prettyPrint=false', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: { client: { clientName: 'ANDROID', clientVersion: '20.10.38' } },
+            videoId: videoId
+          })
+        }).then(function(r){ return r.ok ? r.json() : null; }).then(function(data){
+          return (data && data.captions && data.captions.playerCaptionsTracklistRenderer &&
+                  data.captions.playerCaptionsTracklistRenderer.captionTracks) || null;
+        }).catch(function(){ return null; });
       }
       function decodeEntities(s){
         return s.replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>')
@@ -80,28 +104,35 @@ function buildBookmarklet(backendUrl, token) {
                 .replace(/&#x([0-9a-fA-F]+);/g, function(_,h){ return String.fromCodePoint(parseInt(h,16)); })
                 .replace(/&#(\\d+);/g, function(_,d){ return String.fromCodePoint(parseInt(d,10)); });
       }
-      var pr = getPR();
-      if (!pr) { alert('Không đọc được dữ liệu video. Hãy chắc chắn bạn đang ở đúng trang xem video trên youtube.com.'); return; }
-      var tracks = pr.captions && pr.captions.playerCaptionsTracklistRenderer && pr.captions.playerCaptionsTracklistRenderer.captionTracks;
-      if (!tracks || !tracks.length) { alert('Video này không có transcript/phụ đề.'); return; }
-      var track = tracks.find(function(t){ return (t.languageCode||'').indexOf('en') === 0; }) || tracks[0];
-      var videoId = pr.videoDetails && pr.videoDetails.videoId;
+
+      var videoId = extractVideoId();
+      if (!videoId) { alert('Không tìm thấy video ID trong URL. Hãy mở đúng 1 trang xem video trên youtube.com.'); return; }
       var videoUrl = 'https://www.youtube.com/watch?v=' + videoId;
-      fetch(track.baseUrl).then(function(r){ return r.text(); }).then(function(xml){
-        var re = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\\/text>/g;
-        var m, parts = [];
-        while ((m = re.exec(xml)) !== null) {
-          parts.push('[' + Math.floor(parseFloat(m[1])) + 's] ' + decodeEntities(m[3]));
+
+      getTracksViaInnerTube(videoId).then(function(tracks){
+        return tracks || getTracksFromPageData();
+      }).then(function(tracks){
+        if (!tracks || !tracks.length) {
+          alert('Không lấy được transcript. Video này có thể không có phụ đề, hoặc hãy tải lại trang (F5) rồi thử bấm lại.');
+          return;
         }
-        var transcript = parts.join(' ');
-        if (!transcript) { alert('Không đọc được nội dung transcript.'); return; }
-        return fetch(${JSON.stringify(backendUrl)} + '/api/videos/cache-transcript', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-prefetch-token': ${JSON.stringify(token)} },
-          body: JSON.stringify({ url: videoUrl, hasTranscript: true, transcript: transcript })
-        }).then(function(r){ return r.json(); }).then(function(data){
-          if (data.ok) alert('✅ Đã lưu transcript cho video: ' + videoId);
-          else alert('❌ Lỗi: ' + (data.error || 'không rõ'));
+        var track = tracks.find(function(t){ return (t.languageCode||'').indexOf('en') === 0; }) || tracks[0];
+        return fetch(track.baseUrl).then(function(r){ return r.text(); }).then(function(xml){
+          var re = /<text start="([^"]*)" dur="([^"]*)">([^<]*)<\\/text>/g;
+          var m, parts = [];
+          while ((m = re.exec(xml)) !== null) {
+            parts.push('[' + Math.floor(parseFloat(m[1])) + 's] ' + decodeEntities(m[3]));
+          }
+          var transcript = parts.join(' ');
+          if (!transcript) { alert('Không đọc được nội dung transcript.'); return; }
+          return fetch(${JSON.stringify(backendUrl)} + '/api/videos/cache-transcript', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-prefetch-token': ${JSON.stringify(token)} },
+            body: JSON.stringify({ url: videoUrl, hasTranscript: true, transcript: transcript })
+          }).then(function(r){ return r.json(); }).then(function(data){
+            if (data.ok) alert('✅ Đã lưu transcript cho video: ' + videoId);
+            else alert('❌ Lỗi: ' + (data.error || 'không rõ'));
+          });
         });
       }).catch(function(e){ alert('❌ Lỗi: ' + e.message); });
     })();
