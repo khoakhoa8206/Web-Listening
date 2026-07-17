@@ -8,6 +8,47 @@ if (!process.env.GEMINI_API_KEY) {
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+// Phần 6.4 — Model chính hay bị quá tải (503 "high demand") vì là model mới/hot nhất của Google.
+// Cơ chế xử lý: thử lại vài lần với model chính (đợi tăng dần), nếu vẫn lỗi 503 thì chuyển hẳn
+// sang model dự phòng cũ hơn/ổn định hơn cho lần gọi cuối.
+const PRIMARY_MODEL = "gemini-3.5-flash";
+const FALLBACK_MODEL = "gemini-2.5-flash";
+const RETRY_DELAYS_MS = [2000, 5000]; // 2 lần thử lại với model chính trước khi fallback
+
+function isOverloadedError(err) {
+  const code = err?.code || err?.status || err?.error?.code;
+  const status = err?.status || err?.error?.status;
+  return code === 503 || status === "UNAVAILABLE" || /experiencing high demand|UNAVAILABLE/i.test(err?.message || "");
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// Gọi ai.models.generateContent với retry+fallback dùng chung cho mọi nơi cần gọi Gemini.
+async function generateContentWithRetry(params) {
+  let lastErr;
+  for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
+    try {
+      return await ai.models.generateContent({ ...params, model: PRIMARY_MODEL });
+    } catch (err) {
+      lastErr = err;
+      if (!isOverloadedError(err)) throw err; // lỗi khác (auth, JSON...) thì báo luôn, không retry
+      console.warn(`⚠️  ${PRIMARY_MODEL} quá tải (lần ${i + 1}/${RETRY_DELAYS_MS.length + 1}), thử lại sau ${RETRY_DELAYS_MS[i]}ms...`);
+      await sleep(RETRY_DELAYS_MS[i]);
+    }
+  }
+  try {
+    console.warn(`⚠️  ${PRIMARY_MODEL} vẫn quá tải, chuyển sang model dự phòng ${FALLBACK_MODEL}...`);
+    return await ai.models.generateContent({ ...params, model: FALLBACK_MODEL });
+  } catch (err) {
+    if (isOverloadedError(err)) {
+      throw new Error("Cả 2 model AI đều đang quá tải, vui lòng thử lại sau ít phút.");
+    }
+    throw err;
+  }
+}
+
 const SYSTEM_PROMPT = `Bạn là một trợ lý AI chuyên gia soạn đề luyện IELTS Listening/Writing/Speaking.
 Tôi sẽ cung cấp Transcript có timestamp (định dạng [giây] nội dung, hoặc SRT) của một video.
 Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, không giải thích thêm) theo đúng cấu trúc sau:
@@ -168,8 +209,7 @@ export async function generateFullLesson(transcript, videoUrl, knownWords = [], 
     QUESTION_COUNT_INSTRUCTIONS[questionCount] || QUESTION_COUNT_INSTRUCTIONS.vua
   }`;
 
-  const response = await ai.models.generateContent({
-    model: "gemini-3.5-flash",
+  const response = await generateContentWithRetry({
     contents: `${SYSTEM_PROMPT}\n\nVideo link: ${videoUrl}\nTranscript:\n${transcript}${knownWordsBlock}${bandBlock}${countBlock}`,
     config: { responseMimeType: "application/json" },
   });
@@ -230,8 +270,7 @@ vì không có audio thật). Xuất ra DUY NHẤT JSON hợp lệ, không markd
 Chỉ trả JSON thuần, không thêm text hay \`\`\`json nào khác.`;
 
 export async function gradeSpeakingAnswer(promptText, transcript, part) {
-  const response = await ai.models.generateContent({
-    model: "gemini-3.5-flash",
+  const response = await generateContentWithRetry({
     contents: `${SPEAKING_GRADE_PROMPT}\n\nĐề bài (${part || "Speaking"}): ${promptText || "(không rõ đề bài)"}\n\nTranscript câu trả lời của thí sinh:\n${transcript}`,
     config: { responseMimeType: "application/json" },
   });
