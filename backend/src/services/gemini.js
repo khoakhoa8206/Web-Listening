@@ -147,6 +147,14 @@ const QUESTION_COUNT_INSTRUCTIONS = {
 };
 
 export async function generateFullLesson(transcript, videoUrl, knownWords = [], band, questionCount) {
+  // Nếu thiếu key, báo lỗi rõ ràng ngay tại đây thay vì để Google trả về lỗi
+  // "Expected OAuth 2 access token..." rất khó hiểu khi apiKey rỗng.
+  if (!process.env.GEMINI_API_KEY) {
+    throw new Error(
+      "Thiếu GEMINI_API_KEY trên server (kiểm tra file backend/.env khi chạy local, hoặc biến môi trường trên nền tảng deploy như Render)."
+    );
+  }
+
   const knownWordsBlock =
     knownWords && knownWords.length > 0
       ? `\n\nNgười học đã biết các từ/cụm sau, TUYỆT ĐỐI không lặp lại các từ này trong "vocabCards", hãy chọn từ mới cùng chủ đề: [${knownWords.join(
