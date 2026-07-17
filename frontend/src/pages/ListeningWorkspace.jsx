@@ -39,19 +39,20 @@ function extractYoutubeId(url) {
 // ---------------------------------------------------------------------------
 
 const Blank = React.forwardRef(function Blank(
-  { id, answer, value, isChecked, onChange, onKeyDown, onFocus },
+  { id, answer, blankType, value, isChecked, onChange, onKeyDown, onFocus },
   ref
 ) {
   const isCorrect = isChecked && normalize(value) === normalize(answer);
   const isIncorrect = isChecked && normalize(value) !== normalize(answer);
   const width = Math.max(answer.length, value.length, 4) + 2;
+  const isIdea = blankType === "idea";
 
-  let stateClasses = "border-slate-300 bg-white text-slate-900 focus:border-blue-600";
-  if (isCorrect) stateClasses = "border-emerald-600 bg-emerald-50 text-emerald-700";
-  if (isIncorrect) stateClasses = "border-red-500 bg-red-50 text-red-600";
+  let stateClasses = `${isIdea ? "border-dashed" : ""} border-slate-300 bg-white text-slate-900 focus:border-blue-600`;
+  if (isCorrect) stateClasses = `${isIdea ? "border-dashed" : ""} border-emerald-600 bg-emerald-50 text-emerald-700`;
+  if (isIncorrect) stateClasses = `${isIdea ? "border-dashed" : ""} border-red-500 bg-red-50 text-red-600`;
 
   return (
-    <span className="inline-flex items-center gap-1.5 align-middle mx-1">
+    <span className="inline-flex items-center gap-1.5 align-middle mx-1" title={isIdea ? "Ý quan trọng của bài" : "Từ vựng"}>
       <input
         ref={ref}
         id={id}
@@ -382,6 +383,18 @@ export default function ListeningWorkspace() {
               để chuyển sang ô tiếp theo.
             </p>
 
+            {/* Phần 6.3 — Chú thích 2 loại blank: viền liền = từ vựng, viền chấm = ý quan trọng */}
+            <div className="mb-6 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-4 w-8 rounded border-2 border-slate-300 bg-white" />
+                Từ vựng
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="inline-block h-4 w-8 rounded border-2 border-dashed border-slate-300 bg-white" />
+                Ý quan trọng (tái dùng được cho topic tương tự)
+              </span>
+            </div>
+
             <div className="flex flex-col gap-5">
               {dictation.map((sentence) => (
                 <p
@@ -399,6 +412,7 @@ export default function ListeningWorkspace() {
                         key={seg.id}
                         id={seg.id}
                         answer={seg.answer}
+                        blankType={seg.blankType}
                         value={answers[seg.id] || ""}
                         isChecked={isChecked}
                         onChange={handleChange}

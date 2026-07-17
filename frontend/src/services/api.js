@@ -36,18 +36,28 @@ api.interceptors.response.use(
   }
 );
 
-// Kiểm tra 1 link YouTube có phụ đề (transcript) hay không — dữ liệu thật từ YouTube
+// Kiểm tra 1 link YouTube có phụ đề (transcript) hay không — chỉ dùng làm fallback âm thầm
+// (hay bị lỗi do YouTube chặn IP server), KHÔNG còn là điều kiện bắt buộc để tạo bài.
 export const checkTranscript = (url) =>
   api.post("/videos/check-transcript", { url }).then((r) => r.data);
 // -> { hasTranscript: boolean, transcript?: string }
+
+// Phần 6.1 — Luồng chính để lấy transcript: lấy videoId + link mở sẵn sang youtubetotranscript.com
+// (người dùng tự bấm Copy bên đó rồi dán ngược lại vào app)
+export const getTranscriptLink = (url) =>
+  api.get("/videos/transcript-link", { params: { url } }).then((r) => r.data);
+// -> { videoId, transcriptSiteUrl }
 
 // Tìm video THẬT trên YouTube theo từ khóa / chủ đề (thay cho thư viện mẫu)
 export const searchVideos = (q, topic) =>
   api.get("/videos/search", { params: { q, topic } }).then((r) => r.data.videos);
 
 // Sinh TOÀN BỘ bài học (dictation + writing + vocab + idea bank + true/false + reading + speaking) từ 1 lần gọi Gemini
-export const generateLesson = (videoUrl, transcript, topic, band) =>
-  api.post("/lessons/generate", { videoUrl, transcript, topic, band }).then((r) => r.data);
+// questionCount: "it" | "vua" | "nhieu" — số lượng blank trong dictation, độc lập với band (độ khó)
+export const generateLesson = (videoUrl, transcript, topic, band, questionCount) =>
+  api
+    .post("/lessons/generate", { videoUrl, transcript, topic, band, questionCount })
+    .then((r) => r.data);
 
 // Lấy lại 1 bài học đã tạo trước đó (dùng cho nút "Làm lại", không gọi lại Gemini)
 export const getLesson = (lessonId) => api.get(`/lessons/${lessonId}`).then((r) => r.data);

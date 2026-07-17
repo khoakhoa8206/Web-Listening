@@ -16,6 +16,13 @@ export function extractVideoId(url) {
   return m ? m[1] : null;
 }
 
+// Phần 6.1 — Do youtube-transcript hay bị YouTube chặn IP của server khi deploy (Render/Railway/...),
+// luồng chính để lấy transcript chuyển sang: mở sẵn link youtubetotranscript.com cho đúng video,
+// người dùng tự bấm Copy bên đó rồi dán ngược lại vào app (không cần scrape từ backend nữa).
+export function buildTranscriptSiteUrl(videoId) {
+  return `https://youtubetotranscript.com/transcript?v=${videoId}&current_language_code=en`;
+}
+
 export async function fetchVideoTitle(url) {
   try {
     const res = await fetch(

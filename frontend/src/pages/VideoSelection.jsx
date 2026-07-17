@@ -10,8 +10,10 @@ import {
   Captions,
   Play,
   Clock,
+  ExternalLink,
+  X,
 } from "lucide-react";
-import { checkTranscript, searchVideos } from "../services/api";
+import { checkTranscript, getTranscriptLink, searchVideos } from "../services/api";
 import { useLesson } from "../context/LessonContext";
 
 const TOPICS = ["Tất cả", "Giáo dục", "Môi trường", "Công nghệ", "Y tế"];
@@ -20,15 +22,29 @@ const BANDS = [
   { value: "7.0", label: "Band 7.0" },
   { value: "8.0", label: "Band 8.0+" },
 ];
+// Phần 6.2 — Số lượng câu hỏi (blank) trong dictation, độc lập với Band (Band = độ khó, cái này = số lượng)
+const QUESTION_COUNTS = [
+  { value: "it", label: "Ít (~15-20 câu)" },
+  { value: "vua", label: "Vừa (~25-35 câu)" },
+  { value: "nhieu", label: "Nhiều (~40-50 câu)" },
+];
+
+// Phần 6.1 — Trang lấy transcript thay thế, dùng khi server không tự lấy được transcript (bị chặn IP)
+function buildTranscriptSiteUrl(videoId) {
+  return `https://youtubetotranscript.com/transcript?v=${videoId}&current_language_code=en`;
+}
 
 export default function VideoSelection() {
   const navigate = useNavigate();
   const { generateLesson, status: lessonStatus, error: lessonError } = useLesson();
 
   const [link, setLink] = useState("");
-  const [transcript, setTranscript] = useState(null); // transcript thật lấy từ backend
-  const [checkStatus, setCheckStatus] = useState("idle"); // idle | checking | valid | invalid | error
+  const [transcriptDraft, setTranscriptDraft] = useState(""); // transcript người dùng dán tay
+  const [transcriptSiteUrl, setTranscriptSiteUrl] = useState(null); // link mở sẵn sang youtubetotranscript.com
+  // idle | checking | manual (cần dán tay) | valid (auto lấy được, đã tự điền sẵn)
+  const [checkStatus, setCheckStatus] = useState("idle");
   const [band, setBand] = useState("7.0"); // Phần 5.2 — band điểm mục tiêu, mặc định 7.0
+  const [questionCount, setQuestionCount] = useState("vua"); // Phần 6.2 — số lượng câu hỏi, mặc định Vừa
   const [cooldownSec, setCooldownSec] = useState(0); // Phần 5.6 — đếm ngược cooldown chống spam tạo bài
 
   const [searchQuery, setSearchQuery] = useState("");
@@ -36,24 +52,43 @@ export default function VideoSelection() {
   const [videos, setVideos] = useState([]);
   const [videosLoading, setVideosLoading] = useState(false);
   const [videosError, setVideosError] = useState(null);
-  const [generatingId, setGeneratingId] = useState(null); // id video thư viện đang tạo bài (nếu có)
 
-  // Gọi backend thật để kiểm tra transcript khi người dùng dán / gõ link (debounce 600ms)
+  // Phần 6.1 — video đang mở modal dán transcript (từ lưới thư viện), null = không mở modal nào
+  const [modalVideo, setModalVideo] = useState(null);
+  const [modalTranscript, setModalTranscript] = useState("");
+  const [modalChecking, setModalChecking] = useState(false);
+  const [modalError, setModalError] = useState(null);
+
+  // Phần 6.1 — Luồng chính lấy transcript: lấy link mở sẵn sang youtubetotranscript.com cho đúng video.
+  // Vẫn thử tự động lấy transcript (checkTranscript) song song, âm thầm — nếu may mắn thành công thì
+  // tự điền sẵn để đỡ phải dán tay, nhưng KHÔNG bắt buộc, không chặn nút bấm nếu thất bại.
   useEffect(() => {
     if (!link.trim()) {
       setCheckStatus("idle");
-      setTranscript(null);
+      setTranscriptSiteUrl(null);
+      setTranscriptDraft("");
       return;
     }
     setCheckStatus("checking");
     const timer = setTimeout(async () => {
       try {
-        const { hasTranscript, transcript: t } = await checkTranscript(link);
-        setTranscript(t || null);
-        setCheckStatus(hasTranscript ? "valid" : "invalid");
+        const { transcriptSiteUrl: siteUrl } = await getTranscriptLink(link);
+        setTranscriptSiteUrl(siteUrl);
       } catch (err) {
-        console.error("checkTranscript error:", err);
-        setCheckStatus("error");
+        console.error("getTranscriptLink error:", err);
+        setTranscriptSiteUrl(null);
+      }
+
+      try {
+        const { hasTranscript, transcript: t } = await checkTranscript(link);
+        if (hasTranscript && t) {
+          setTranscriptDraft((prev) => (prev.trim() ? prev : t));
+          setCheckStatus("valid");
+        } else {
+          setCheckStatus("manual");
+        }
+      } catch (err) {
+        setCheckStatus("manual");
       }
     }, 600);
     return () => clearTimeout(timer);
@@ -97,34 +132,63 @@ export default function VideoSelection() {
     }
   };
 
-  // Bấm "AI Tự Động Soạn Bài" cho link tự nhập
+  const canGenerateFromLink =
+    link.trim().length > 0 &&
+    transcriptDraft.trim().length > 0 &&
+    lessonStatus !== "generating" &&
+    cooldownSec === 0;
+
+  // Bấm "AI Tự Động Soạn Bài" cho link tự nhập — dùng transcript đã dán tay (hoặc tự điền sẵn nếu may mắn)
   const handleGenerateFromLink = async () => {
-    if (checkStatus !== "valid" || cooldownSec > 0) return;
+    if (!canGenerateFromLink) return;
     try {
-      await generateLesson(link, transcript, "", band);
+      await generateLesson(link, transcriptDraft, "", band, questionCount);
       navigate("/listening");
     } catch (err) {
       handleCooldownError(err);
     }
   };
 
-  // Bấm 1 video tìm được -> lấy transcript thật rồi tạo bài học từ video đó
+  // Bấm 1 video trong lưới thư viện -> mở modal để lấy/dán transcript cho đúng video đó
   const handleSelectLibraryVideo = async (video) => {
     if (cooldownSec > 0) return;
-    setGeneratingId(video.id);
+    setModalVideo(video);
+    setModalTranscript("");
+    setModalError(null);
+    setModalChecking(true);
     try {
       const { hasTranscript, transcript: t } = await checkTranscript(video.url);
-      if (!hasTranscript) {
-        setVideosError("Video này không có phụ đề khả dụng, hãy chọn video khác.");
-        return;
-      }
-      await generateLesson(video.url, t, activeTopic === "Tất cả" ? "" : activeTopic, band);
+      if (hasTranscript && t) setModalTranscript(t);
+    } catch (err) {
+      // im lặng — không chặn, người dùng vẫn dán tay được
+    } finally {
+      setModalChecking(false);
+    }
+  };
+
+  const closeModal = () => {
+    setModalVideo(null);
+    setModalTranscript("");
+    setModalError(null);
+  };
+
+  // Bấm "Tạo bài học" trong modal
+  const handleModalGenerate = async () => {
+    if (!modalVideo || !modalTranscript.trim() || cooldownSec > 0) return;
+    setModalError(null);
+    try {
+      await generateLesson(
+        modalVideo.url,
+        modalTranscript,
+        activeTopic === "Tất cả" ? "" : activeTopic,
+        band,
+        questionCount
+      );
       navigate("/listening");
     } catch (err) {
       console.error(err);
       handleCooldownError(err);
-    } finally {
-      setGeneratingId(null);
+      setModalError(err?.response?.data?.error || err.message || "Có lỗi khi tạo bài học");
     }
   };
 
@@ -141,7 +205,7 @@ export default function VideoSelection() {
           <p className="mb-3 text-sm font-semibold text-slate-900">Tự nhập bài học bằng Link</p>
 
           {/* Phần 5.2 — Chọn band điểm mục tiêu, AI điều chỉnh độ khó từ vựng/câu hỏi/reading */}
-          <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
             <span className="text-xs font-medium text-slate-500">Band mục tiêu:</span>
             {BANDS.map((b) => (
               <button
@@ -158,71 +222,94 @@ export default function VideoSelection() {
             ))}
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <div className="relative flex-1">
-              <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                placeholder="Dán link YouTube vào đây..."
-                className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
-              />
-            </div>
-
-            <button
-              onClick={handleGenerateFromLink}
-              disabled={checkStatus !== "valid" || lessonStatus === "generating" || cooldownSec > 0}
-              className={`flex shrink-0 items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
-                checkStatus === "valid" && lessonStatus !== "generating" && cooldownSec === 0
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
-                  : "cursor-not-allowed bg-slate-200 text-slate-400"
-              }`}
-            >
-              {lessonStatus === "generating" ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang soạn bài... (có thể mất 5-15 giây)
-                </>
-              ) : cooldownSec > 0 ? (
-                <>Đợi {cooldownSec}s để tránh spam</>
-              ) : (
-                <>
-                  <Sparkles className="h-4 w-4" strokeWidth={2} />
-                  AI Tự Động Soạn Bài
-                </>
-              )}
-            </button>
+          {/* Phần 6.2 — Chọn số lượng câu hỏi (blank), độc lập với độ khó */}
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-slate-500">Số lượng câu hỏi:</span>
+            {QUESTION_COUNTS.map((q) => (
+              <button
+                key={q.value}
+                onClick={() => setQuestionCount(q.value)}
+                className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                  questionCount === q.value
+                    ? "bg-blue-600 text-white"
+                    : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
+              >
+                {q.label}
+              </button>
+            ))}
           </div>
 
-          {/* Trạng thái kiểm tra phụ đề */}
+          <div className="relative mb-3">
+            <Link2 className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="Dán link YouTube vào đây..."
+              className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            />
+          </div>
+
+          {/* Trạng thái kiểm tra + nút mở trang lấy transcript */}
           {checkStatus === "checking" && (
-            <div className="mt-3 flex w-fit items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500">
+            <div className="mb-3 flex w-fit items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Đang kiểm tra phụ đề...
+              Đang kiểm tra video...
             </div>
           )}
 
           {checkStatus === "valid" && (
-            <div className="mt-3 flex w-fit items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
+            <div className="mb-3 flex w-fit items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Video hợp lệ (Có sẵn phụ đề - Tối ưu AI)
+              Đã tự lấy được transcript — có thể tạo bài ngay, hoặc sửa lại transcript bên dưới.
             </div>
           )}
 
-          {checkStatus === "invalid" && (
-            <div className="mt-3 flex w-fit items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Video này không hỗ trợ phụ đề. Vui lòng chọn video khác.
+          {(checkStatus === "manual" || checkStatus === "valid") && (
+            <div className="mb-3 space-y-2">
+              {transcriptSiteUrl && (
+                <button
+                  onClick={() => window.open(transcriptSiteUrl, "_blank", "noopener")}
+                  className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  <ExternalLink className="h-3.5 w-3.5" />
+                  Mở trang lấy transcript (youtubetotranscript.com)
+                </button>
+              )}
+              <textarea
+                value={transcriptDraft}
+                onChange={(e) => setTranscriptDraft(e.target.value)}
+                placeholder="Dán transcript đã copy từ trang trên vào đây..."
+                rows={4}
+                className="w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              />
             </div>
           )}
 
-          {checkStatus === "error" && (
-            <div className="mt-3 flex w-fit items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
-              <AlertTriangle className="h-3.5 w-3.5" />
-              Không kết nối được tới backend. Kiểm tra server có đang chạy ở :8787 không.
-            </div>
-          )}
+          <button
+            onClick={handleGenerateFromLink}
+            disabled={!canGenerateFromLink}
+            className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors sm:w-auto ${
+              canGenerateFromLink
+                ? "bg-blue-600 text-white hover:bg-blue-700"
+                : "cursor-not-allowed bg-slate-200 text-slate-400"
+            }`}
+          >
+            {lessonStatus === "generating" ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Đang soạn bài... (có thể mất 5-15 giây)
+              </>
+            ) : cooldownSec > 0 ? (
+              <>Đợi {cooldownSec}s để tránh spam</>
+            ) : (
+              <>
+                <Sparkles className="h-4 w-4" strokeWidth={2} />
+                AI Tự Động Soạn Bài
+              </>
+            )}
+          </button>
 
           {lessonStatus === "error" && lessonError && (
             <div className="mt-3 flex w-fit items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
@@ -298,60 +385,137 @@ export default function VideoSelection() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {videos.map((video) => {
-              const isThisGenerating = generatingId === video.id;
-              return (
-                <button
-                  key={video.id}
-                  onClick={() => handleSelectLibraryVideo(video)}
-                  disabled={generatingId !== null || cooldownSec > 0}
-                  className="group text-left rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md disabled:opacity-60"
-                >
-                  <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-t-xl bg-slate-100">
-                    {video.thumbnail && (
-                      <img
-                        src={video.thumbnail}
-                        alt={video.title}
-                        className="absolute inset-0 h-full w-full object-cover"
-                      />
-                    )}
-                    <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 shadow-sm transition-transform group-hover:scale-105">
-                      {isThisGenerating ? (
-                        <Loader2 className="h-4 w-4 animate-spin text-slate-700" />
-                      ) : (
-                        <Play className="h-4 w-4 text-slate-700" fill="currentColor" />
-                      )}
-                    </div>
-
-                    <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-xs font-semibold text-white">
-                      <Captions className="h-3.5 w-3.5" />
-                      CC
-                    </div>
-
-                    {video.duration && (
-                      <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-xs font-medium text-white">
-                        <Clock className="h-3 w-3" />
-                        {video.duration}
-                      </div>
-                    )}
+            {videos.map((video) => (
+              <button
+                key={video.id}
+                onClick={() => handleSelectLibraryVideo(video)}
+                disabled={cooldownSec > 0}
+                className="group text-left rounded-xl bg-white shadow-sm transition-shadow hover:shadow-md disabled:opacity-60"
+              >
+                <div className="relative flex h-36 items-center justify-center overflow-hidden rounded-t-xl bg-slate-100">
+                  {video.thumbnail && (
+                    <img
+                      src={video.thumbnail}
+                      alt={video.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  )}
+                  <div className="relative flex h-10 w-10 items-center justify-center rounded-lg bg-white/80 shadow-sm transition-transform group-hover:scale-105">
+                    <Play className="h-4 w-4 text-slate-700" fill="currentColor" />
                   </div>
 
-                  <div className="p-4">
-                    <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-slate-900">
-                      {video.title}
-                    </h3>
-                    <div className="flex items-center justify-between">
-                      <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
-                        {video.channelTitle}
-                      </span>
-                    </div>
+                  <div className="absolute right-2 top-2 flex items-center gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-xs font-semibold text-white">
+                    <Captions className="h-3.5 w-3.5" />
+                    CC
                   </div>
-                </button>
-              );
-            })}
+
+                  {video.duration && (
+                    <div className="absolute bottom-2 right-2 flex items-center gap-1 rounded-lg bg-slate-900/80 px-2 py-1 text-xs font-medium text-white">
+                      <Clock className="h-3 w-3" />
+                      {video.duration}
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-4">
+                  <h3 className="mb-2 line-clamp-2 text-sm font-semibold text-slate-900">
+                    {video.title}
+                  </h3>
+                  <div className="flex items-center justify-between">
+                    <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                      {video.channelTitle}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))}
           </div>
         )}
       </div>
+
+      {/* ================= Modal: lấy/dán transcript cho video trong thư viện ================= */}
+      {modalVideo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white p-5 shadow-lg">
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <h3 className="text-sm font-semibold text-slate-900">{modalVideo.title}</h3>
+              <button
+                onClick={closeModal}
+                className="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <div className="mb-3 flex flex-wrap gap-2">
+              <a
+                href={modalVideo.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <Play className="h-3.5 w-3.5" />
+                Xem trên YouTube
+              </a>
+              <a
+                href={buildTranscriptSiteUrl(modalVideo.id)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Lấy transcript ↗
+              </a>
+            </div>
+
+            {modalChecking && (
+              <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Đang thử tự động lấy transcript...
+              </div>
+            )}
+
+            <textarea
+              value={modalTranscript}
+              onChange={(e) => setModalTranscript(e.target.value)}
+              placeholder="Dán transcript đã copy từ trang trên vào đây..."
+              rows={6}
+              className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            />
+
+            {modalError && (
+              <div className="mb-3 flex items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                {modalError}
+              </div>
+            )}
+
+            <button
+              onClick={handleModalGenerate}
+              disabled={!modalTranscript.trim() || lessonStatus === "generating" || cooldownSec > 0}
+              className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
+                modalTranscript.trim() && lessonStatus !== "generating" && cooldownSec === 0
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "cursor-not-allowed bg-slate-200 text-slate-400"
+              }`}
+            >
+              {lessonStatus === "generating" ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Đang soạn bài...
+                </>
+              ) : cooldownSec > 0 ? (
+                <>Đợi {cooldownSec}s để tránh spam</>
+              ) : (
+                <>
+                  <Sparkles className="h-4 w-4" strokeWidth={2} />
+                  Tạo bài học
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

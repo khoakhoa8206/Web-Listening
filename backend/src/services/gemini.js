@@ -19,7 +19,8 @@ Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, khôn
       "startTime": <số giây bắt đầu câu, lấy từ timestamp transcript>,
       "segments": [
         { "type": "text", "content": "..." },
-        { "type": "blank", "id": "b1", "answer": "từ khóa bị ẩn" },
+        { "type": "blank", "id": "b1", "answer": "từ khóa bị ẩn", "blankType": "vocab" },
+        { "type": "blank", "id": "b2", "answer": "cụm từ mang 1 ý quan trọng của bài", "blankType": "idea" },
         { "type": "text", "content": "..." }
       ]
     }
@@ -53,7 +54,23 @@ Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, khôn
           "application": "Cách áp dụng vào bài Writing Task 2 (tiếng Việt)",
           "sample": "1 câu mẫu hoàn chỉnh dùng ý tưởng này (tiếng Anh)"
         }
-      ]
+      ],
+      "task2Question": "1 đề bài Writing Task 2 (tiếng Anh), cụ thể/nuanced theo phong cách đề thi 2026, gắn chặt với đúng luận điểm của video (KHÔNG phải dạng chung chung dễ áp template kiểu 'Is technology good or bad')",
+      "task2Outline": {
+        "thesis": "Luận điểm chính trả lời thẳng câu hỏi task2Question (tiếng Anh, 1 câu)",
+        "bodyParagraphs": [
+          {
+            "mainPoint": "Luận điểm 1 (tiếng Anh)",
+            "explanation": "Giải thích logic cho luận điểm 1 (tiếng Anh, 2-3 câu)",
+            "example": "Ví dụ cụ thể lấy cảm hứng từ nội dung video (tiếng Anh)"
+          },
+          {
+            "mainPoint": "Luận điểm 2 (tiếng Anh)",
+            "explanation": "Giải thích logic cho luận điểm 2 (tiếng Anh, 2-3 câu)",
+            "example": "Ví dụ cụ thể lấy cảm hứng từ nội dung video (tiếng Anh)"
+          }
+        ]
+      }
     }
   ],
   "trueFalseQuestions": [
@@ -98,10 +115,10 @@ Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, khôn
 }
 
 Quy tắc:
-- dictation: chọn khoảng 7-10 đoạn hay nhất trong transcript, mỗi đoạn 3-5 câu gộp thành 1 object, mỗi object ẩn 2-3 từ khóa quan trọng nhất làm "blank", sao cho tổng số "blank" trên toàn bộ dictation vào khoảng 20 câu. Chia đều và tự nhiên số từ ẩn qua các đoạn, KHÔNG dồn nhiều từ ẩn vào 1-2 câu liền kề gây khó đọc (mỗi câu trong 1 đoạn chỉ nên ẩn tối đa 1 từ, trừ khi câu đó đủ dài). Nếu transcript quá ngắn để tạo đủ khoảng 20 câu hỏi có nghĩa (không lặp ý, không gượng ép), được phép tạo ít hơn — ưu tiên chất lượng và tính tự nhiên hơn là cố đạt đủ số lượng, và tuyệt đối KHÔNG bịa thêm nội dung không có trong transcript.
+- dictation: chọn khoảng 7-10 đoạn hay nhất trong transcript, mỗi đoạn 3-5 câu gộp thành 1 object. Mỗi blank PHẢI có field "blankType": "vocab" (ẩn 1 từ/collocation quan trọng) hoặc "idea" (ẩn 1 cụm 3-8 từ mang 1 luận điểm/ý chính có thể tái sử dụng ở đề khác cùng chủ đề, để người học vừa nghe vừa nhớ ý). Trong tổng số blank, khoảng 60-70% là "vocab", 30-40% là "idea" — không dồn hết vào 1 loại. Tổng số "blank" trên toàn bộ dictation tuân theo SỐ LƯỢNG CÂU HỎI ở cuối prompt. Chia đều và tự nhiên số blank qua các đoạn, KHÔNG dồn nhiều blank vào 1-2 câu liền kề gây khó đọc (mỗi câu chỉ nên có tối đa 1 blank, trừ khi câu đó đủ dài). Nếu transcript quá ngắn để tạo đủ số lượng yêu cầu một cách có nghĩa (không lặp ý, không gượng ép), được phép tạo ít hơn — ưu tiên chất lượng và tính tự nhiên hơn là cố đạt đủ số lượng, và tuyệt đối KHÔNG bịa thêm nội dung không có trong transcript.
 - writingQuestions: đúng 3 câu, luôn có đúng 4 options, chỉ 1 đáp án đúng.
 - vocabCards: 10-15 từ/cụm từ, ưu tiên collocation tự nhiên hay gặp trong band 7+.
-- ideaBank: gom thành 1-2 nhóm topic, mỗi topic 1-2 ý tưởng.
+- ideaBank: gom thành 1-2 nhóm topic, mỗi topic 1-2 ý tưởng, và với MỖI topic phải có đúng 1 "task2Question" + 1 "task2Outline" (thesis + đúng 2 bodyParagraphs). Đề bài "task2Question" và toàn bộ "task2Outline" phải TRÁNH các câu mở bài/luận điểm sáo rỗng kiểu "In today's modern world...", "It is a well-known fact that..." — viết như 1 thí sinh Band 8 thật sự tư duy dựa trên nội dung video, không phải học thuộc mẫu có sẵn.
 - trueFalseQuestions: đúng 4 câu, trộn đều cả 3 đáp án True/False/Not Given (không dồn hết vào 1 loại).
 - readingPassage: viết 1 đoạn văn TIẾNG ANH độc lập, văn phong học thuật kiểu IELTS Reading, dựa trên chủ đề/nội dung transcript nhưng KHÔNG dịch nguyên hay chép lại transcript — tự viết lại theo góc nhìn/luận điểm riêng. Độ dài khoảng 250-350 từ, chia thành 3-4 "paragraphs". Sinh khoảng 8-10 "questions", trộn đều 2 loại: "true_false_notgiven" (đáp án True/False/Not Given) và "mcq" (đúng 4 options, 1 correctIndex đúng). Câu hỏi phải trả lời được chỉ dựa vào chính đoạn văn readingPassage (không cần xem lại transcript gốc).
 - speakingPrompt.part2: đúng 4 bullet gợi ý; part3: đúng 3 câu hỏi mở rộng.
@@ -121,7 +138,15 @@ nhiều lớp, đánh lừa nhẹ (distractor tinh vi) giống đề thi thật 
 câu phức, mệnh đề lồng nhau như báo học thuật/The Economist.`,
 };
 
-export async function generateFullLesson(transcript, videoUrl, knownWords = [], band) {
+// Phần 6.2 — Số lượng câu hỏi (blank) trong dictation: người dùng chọn Ít/Vừa/Nhiều, độc lập với
+// Band mục tiêu (Band chỉnh độ khó từ vựng/câu hỏi, thanh này chỉnh số LƯỢNG).
+const QUESTION_COUNT_INSTRUCTIONS = {
+  it: "Tổng số toàn bộ \"blank\" (cả vocab lẫn idea, cộng dồn toàn bài dictation) trong khoảng 15-20 câu.",
+  vua: "Tổng số toàn bộ \"blank\" (cả vocab lẫn idea, cộng dồn toàn bài dictation) trong khoảng 25-35 câu.",
+  nhieu: "Tổng số toàn bộ \"blank\" (cả vocab lẫn idea, cộng dồn toàn bài dictation) trong khoảng 40-50 câu.",
+};
+
+export async function generateFullLesson(transcript, videoUrl, knownWords = [], band, questionCount) {
   const knownWordsBlock =
     knownWords && knownWords.length > 0
       ? `\n\nNgười học đã biết các từ/cụm sau, TUYỆT ĐỐI không lặp lại các từ này trong "vocabCards", hãy chọn từ mới cùng chủ đề: [${knownWords.join(
@@ -131,9 +156,13 @@ export async function generateFullLesson(transcript, videoUrl, knownWords = [], 
 
   const bandBlock = BAND_INSTRUCTIONS[band] ? `\n\nĐỘ KHÓ MỤC TIÊU: ${BAND_INSTRUCTIONS[band]}` : "";
 
+  const countBlock = `\n\nSỐ LƯỢNG CÂU HỎI: ${
+    QUESTION_COUNT_INSTRUCTIONS[questionCount] || QUESTION_COUNT_INSTRUCTIONS.vua
+  }`;
+
   const response = await ai.models.generateContent({
     model: "gemini-3.5-flash",
-    contents: `${SYSTEM_PROMPT}\n\nVideo link: ${videoUrl}\nTranscript:\n${transcript}${knownWordsBlock}${bandBlock}`,
+    contents: `${SYSTEM_PROMPT}\n\nVideo link: ${videoUrl}\nTranscript:\n${transcript}${knownWordsBlock}${bandBlock}${countBlock}`,
     config: { responseMimeType: "application/json" },
   });
 

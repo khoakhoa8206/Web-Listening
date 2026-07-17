@@ -64,10 +64,10 @@ function generateCooldown(req, res, next) {
   next();
 }
 
-// POST /api/lessons/generate  { videoUrl, transcript, topic?, band? }
+// POST /api/lessons/generate  { videoUrl, transcript, topic?, band?, questionCount? }
 // -> { lessonId, title, dictation, writingQuestions, vocabCards, ideaBank, trueFalseQuestions, speakingPrompt, readingPassage }
 router.post("/generate", requirePin, generateCooldown, async (req, res) => {
-  const { videoUrl, transcript, topic, band } = req.body;
+  const { videoUrl, transcript, topic, band, questionCount } = req.body;
 
   if (!videoUrl || !transcript) {
     return res.status(400).json({ error: "Thiếu videoUrl hoặc transcript trong request body." });
@@ -77,7 +77,7 @@ router.post("/generate", requirePin, generateCooldown, async (req, res) => {
     const knownWords = await getKnownWords(topic);
 
     const [lesson, title] = await Promise.all([
-      generateFullLesson(transcript, videoUrl, knownWords, band),
+      generateFullLesson(transcript, videoUrl, knownWords, band, questionCount),
       fetchVideoTitle(videoUrl),
     ]);
     const id = randomUUID();

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { fetchTranscript, searchVideos } from "../services/youtube.js";
+import { fetchTranscript, searchVideos, extractVideoId, buildTranscriptSiteUrl } from "../services/youtube.js";
 import { requirePin } from "../middleware/requirePin.js";
 
 const router = Router();
@@ -55,8 +55,22 @@ router.get("/search", requirePin, async (req, res) => {
   }
 });
 
+// GET /api/videos/transcript-link?url=...
+// Phần 6.1 — Luồng chính để lấy transcript (không phụ thuộc server tự scrape YouTube):
+// trả về videoId + link mở sẵn sang youtubetotranscript.com cho đúng video đó.
+router.get("/transcript-link", requirePin, (req, res) => {
+  const { url } = req.query;
+  const videoId = extractVideoId(url);
+  if (!videoId) {
+    return res.status(400).json({ error: "Không nhận diện được video ID từ link này." });
+  }
+  res.json({ videoId, transcriptSiteUrl: buildTranscriptSiteUrl(videoId) });
+});
+
 // POST /api/videos/check-transcript { url }
-// Lấy transcript THẬT của video qua youtube-transcript, không còn dữ liệu mẫu.
+// Thử tự động lấy transcript qua youtube-transcript (âm thầm, không bắt buộc). Hay bị chặn IP khi
+// deploy nên KHÔNG còn là điều kiện bắt buộc để tạo bài — chỉ là "thử vận may", nếu lỗi thì frontend
+// sẽ chuyển sang luồng chính: mở /transcript-link rồi cho người dùng dán transcript tay.
 router.post("/check-transcript", async (req, res) => {
   const { url } = req.body;
 

@@ -18,11 +18,12 @@ export function LessonProvider({ children }) {
   const [error, setError] = useState(null);
 
   // Gọi backend 1 lần duy nhất -> nhận đủ nội dung (nghe, viết, từ vựng, ý tưởng, T/F, speaking)
-  const generateLesson = useCallback(async (url, transcript, topic, band) => {
+  // questionCount: "it" | "vua" | "nhieu" — số lượng blank trong dictation
+  const generateLesson = useCallback(async (url, transcript, topic, band, questionCount) => {
     setStatus("generating");
     setError(null);
     try {
-      const data = await apiGenerateLesson(url, transcript, topic, band);
+      const data = await apiGenerateLesson(url, transcript, topic, band, questionCount);
       setLessonId(data.lessonId);
       setVideoUrl(url);
       setTitle(data.title || url);

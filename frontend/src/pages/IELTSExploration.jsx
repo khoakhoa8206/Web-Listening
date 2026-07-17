@@ -20,6 +20,7 @@ import {
   Mic,
   MicOff,
   Award,
+  FileText,
 } from "lucide-react";
 import { useLesson } from "../context/LessonContext";
 import { saveProgress, getSavedVocab, saveVocab, deleteVocab, gradeSpeaking } from "../services/api";
@@ -722,6 +723,41 @@ function IdeaBankTab({ ideaBank }) {
               </div>
             ))}
           </div>
+
+          {/* Phần 6.3 — Đề Writing Task 2 + dàn ý chi tiết, sinh riêng cho từng topic trong ideaBank */}
+          {group.task2Question && group.task2Outline && (
+            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="mb-3 flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-slate-700" />
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-700">
+                  Đề Writing Task 2 (bám sát nội dung video)
+                </p>
+              </div>
+              <p className="mb-4 rounded-lg bg-slate-50 p-3 text-sm font-medium text-slate-900">
+                {group.task2Question}
+              </p>
+
+              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Dàn ý gợi ý
+              </p>
+              <p className="mb-3 text-sm text-slate-700">
+                <span className="font-semibold text-slate-900">Thesis: </span>
+                {group.task2Outline.thesis}
+              </p>
+
+              <div className="space-y-3">
+                {group.task2Outline.bodyParagraphs?.map((p, pIdx) => (
+                  <div key={pIdx} className="rounded-r-lg border-l-4 border-slate-300 bg-slate-50 p-3">
+                    <p className="mb-1 text-sm font-semibold text-slate-900">
+                      Luận điểm {pIdx + 1}: {p.mainPoint}
+                    </p>
+                    <p className="mb-1 text-sm text-slate-700">{p.explanation}</p>
+                    <p className="text-sm italic text-slate-600">Ví dụ: {p.example}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       ))}
     </div>
