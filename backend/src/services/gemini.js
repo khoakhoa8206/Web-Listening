@@ -60,7 +60,7 @@ Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, khôn
       "startTime": <số giây bắt đầu câu, lấy từ timestamp transcript>,
       "segments": [
         { "type": "text", "content": "..." },
-        { "type": "blank", "id": "b1", "answer": "từ khóa bị ẩn", "blankType": "vocab" },
+        { "type": "blank", "id": "b1", "answer": "từ khóa bị ẩn (viết thường, không dấu gạch nối)", "blankType": "vocab" },
         { "type": "blank", "id": "b2", "answer": "cụm từ mang 1 ý quan trọng của bài", "blankType": "idea" },
         { "type": "text", "content": "..." }
       ]
@@ -82,8 +82,14 @@ Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, khôn
       "word": "cụm từ/collocation C1-C2",
       "phonetic": "/phiên âm IPA/",
       "meaning": "nghĩa tiếng Việt",
+      "wordType": "topic-vocab | phrasal verb | collocation | idiom",
+      "topic": "Topic IELTS liên quan (VD: Technology, Environment, Education)",
       "source": "câu gốc nguyên văn trong transcript có chứa từ này",
-      "tip": "gợi ý câu trả lời mẫu Speaking Part 2 hoặc 3 có dùng từ này"
+      "example": "1 câu ví dụ thực tế dùng từ này (tiếng Anh)",
+      "collocations": ["collocation liên quan 1 (nếu có)", "collocation liên quan 2"],
+      "writingUse": "Gợi ý cách dùng từ này trong Writing Task 2 (tiếng Việt)",
+      "speakingUse": "Gợi ý cách dùng từ này trong Speaking Part 1/2/3 (tiếng Việt)",
+      "tip": "gợi ý ngắn gọn áp dụng vào Writing/Speaking"
     }
   ],
   "ideaBank": [
@@ -96,22 +102,48 @@ Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, khôn
           "sample": "1 câu mẫu hoàn chỉnh dùng ý tưởng này (tiếng Anh)"
         }
       ],
-      "task2Question": "1 đề bài Writing Task 2 (tiếng Anh), cụ thể/nuanced theo phong cách đề thi 2026, gắn chặt với đúng luận điểm của video (KHÔNG phải dạng chung chung dễ áp template kiểu 'Is technology good or bad')",
-      "task2Outline": {
-        "thesis": "Luận điểm chính trả lời thẳng câu hỏi task2Question (tiếng Anh, 1 câu)",
-        "bodyParagraphs": [
-          {
-            "mainPoint": "Luận điểm 1 (tiếng Anh)",
-            "explanation": "Giải thích logic cho luận điểm 1 (tiếng Anh, 2-3 câu)",
-            "example": "Ví dụ cụ thể lấy cảm hứng từ nội dung video (tiếng Anh)"
-          },
-          {
-            "mainPoint": "Luận điểm 2 (tiếng Anh)",
-            "explanation": "Giải thích logic cho luận điểm 2 (tiếng Anh, 2-3 câu)",
-            "example": "Ví dụ cụ thể lấy cảm hứng từ nội dung video (tiếng Anh)"
+      "task2Questions": [
+        {
+          "question": "Đề bài Writing Task 2 thực tế số 1 (tiếng Anh, phong cách đề thi 2024-2026, KHÔNG chung chung)",
+          "task2Outline": {
+            "thesis": "Luận điểm chính (tiếng Anh, 1 câu, band 8 style)",
+            "bodyParagraphs": [
+              {
+                "mainPoint": "Luận điểm 1 (tiếng Anh)",
+                "explanation": "Giải thích logic (tiếng Anh, 2-3 câu)",
+                "example": "Ví dụ cụ thể (tiếng Anh)",
+                "realWorld": "Liên hệ thực tế / bằng chứng từ thực tiễn (tiếng Anh)"
+              },
+              {
+                "mainPoint": "Luận điểm 2 (tiếng Anh)",
+                "explanation": "Giải thích logic (tiếng Anh, 2-3 câu)",
+                "example": "Ví dụ cụ thể (tiếng Anh)",
+                "realWorld": "Liên hệ thực tế / bằng chứng từ thực tiễn (tiếng Anh)"
+              }
+            ]
           }
-        ]
-      }
+        },
+        {
+          "question": "Đề bài Writing Task 2 thực tế số 2",
+          "task2Outline": {
+            "thesis": "...",
+            "bodyParagraphs": [
+              { "mainPoint": "...", "explanation": "...", "example": "...", "realWorld": "..." },
+              { "mainPoint": "...", "explanation": "...", "example": "...", "realWorld": "..." }
+            ]
+          }
+        },
+        {
+          "question": "Đề bài Writing Task 2 thực tế số 3",
+          "task2Outline": {
+            "thesis": "...",
+            "bodyParagraphs": [
+              { "mainPoint": "...", "explanation": "...", "example": "...", "realWorld": "..." },
+              { "mainPoint": "...", "explanation": "...", "example": "...", "realWorld": "..." }
+            ]
+          }
+        }
+      ]
     }
   ],
   "trueFalseQuestions": [
@@ -143,23 +175,14 @@ Nhiệm vụ: xuất ra DUY NHẤT một JSON hợp lệ (không markdown, khôn
       }
     ]
   },
-  "speakingPrompt": {
-    "part2": {
-      "cueCard": "Describe a ... (đề bài Speaking Part 2 liên quan chủ đề video, đúng format cue card IELTS)",
-      "bullets": ["gợi ý 1", "gợi ý 2", "gợi ý 3", "gợi ý 4"],
-      "sampleOutline": "1 đoạn mẫu ngắn (4-5 câu, tiếng Anh) trả lời cue card trên, có dùng ít nhất 1 từ trong vocabCards"
-    },
-    "part3": [
-      { "question": "1 câu hỏi Speaking Part 3 mở rộng chủ đề (tiếng Anh)", "tip": "Gợi ý hướng trả lời ngắn (tiếng Việt)" }
-    ]
-  }
+  "speakingPrompt": { "part2": { "cueCard": "", "bullets": [], "sampleOutline": "" }, "part3": [] }
 }
 
 Quy tắc:
-- dictation: chọn khoảng 7-10 đoạn hay nhất trong transcript, mỗi đoạn 3-5 câu gộp thành 1 object. Mỗi blank PHẢI có field "blankType": "vocab" (ẩn 1 từ hoặc collocation tối đa 3 từ — TUYỆT ĐỐI KHÔNG quá 3 từ cho loại "vocab") hoặc "idea" (ẩn 1 cụm 3-8 từ mang 1 luận điểm/ý chính có thể tái sử dụng ở đề khác cùng chủ đề, để người học vừa nghe vừa nhớ ý). Trong tổng số blank, khoảng 60-70% là "vocab", 30-40% là "idea" — không dồn hết vào 1 loại. Tổng số "blank" trên toàn bộ dictation tuân theo SỐ LƯỢNG CÂU HỎI ở cuối prompt. Chia đều và tự nhiên số blank qua các đoạn, KHÔNG dồn nhiều blank vào 1-2 câu liền kề gây khó đọc (mỗi câu chỉ nên có tối đa 1 blank, trừ khi câu đó đủ dài). Nếu transcript quá ngắn để tạo đủ số lượng yêu cầu một cách có nghĩa (không lặp ý, không gượng ép), được phép tạo ít hơn — ưu tiên chất lượng và tính tự nhiên hơn là cố đạt đủ số lượng, và tuyệt đối KHÔNG bịa thêm nội dung không có trong transcript.
+- dictation: Mỗi object trong mảng dictation là MỘT CÂU đơn lẻ (kết thúc bằng dấu "." hoặc "?" hoặc "!"). KHÔNG gộp nhiều câu vào 1 object. Chọn khoảng 20-30 câu hay nhất trải đều trong transcript. Mỗi blank PHẢI có field "blankType": "vocab" (ẩn TỐI ĐA 3 TỪ — các từ phù hợp gồm: topic-vocab quan trọng, từ có đuôi -ed/-es/-s, từ bị nuốt âm khi nói ở band 8.0+, cụm phrasal verb, collocation — TUYỆT ĐỐI KHÔNG quá 3 từ) hoặc "idea" (ẩn 1 cụm 3-8 từ mang luận điểm/ý chính của bài, band 8.0+ mới dùng). Trong tổng blank, khoảng 70-80% là "vocab", 20-30% là "idea". Mỗi câu chỉ có TỐI ĐA 1 blank. Tổng số "blank" trên toàn bộ dictation tuân theo SỐ LƯỢNG CÂU HỎI ở cuối prompt. Tuyệt đối KHÔNG bịa nội dung không có trong transcript.
 - writingQuestions: đúng 3 câu, luôn có đúng 4 options, chỉ 1 đáp án đúng.
-- vocabCards: 10-15 từ/cụm từ, ưu tiên collocation tự nhiên hay gặp trong band 7+.
-- ideaBank: gom thành 1-2 nhóm topic, mỗi topic 1-2 ý tưởng, và với MỖI topic phải có đúng 1 "task2Question" + 1 "task2Outline" (thesis + đúng 2 bodyParagraphs). Đề bài "task2Question" và toàn bộ "task2Outline" phải TRÁNH các câu mở bài/luận điểm sáo rỗng kiểu "In today's modern world...", "It is a well-known fact that..." — viết như 1 thí sinh Band 8 thật sự tư duy dựa trên nội dung video, không phải học thuộc mẫu có sẵn.
+- vocabCards: 10-15 từ/cụm từ, ưu tiên collocation/phrasal verb/topic-vocab band 7+. Với mỗi card phải điền đủ: wordType (topic-vocab/phrasal verb/collocation/idiom), topic (chủ đề IELTS), example (câu ví dụ thực tế), collocations (tối đa 3 collocation liên quan), writingUse, speakingUse.
+- ideaBank: gom thành 1-2 nhóm topic, mỗi topic 1-2 ý tưởng, và với MỖI topic phải có đúng 3 đề bài trong "task2Questions" (mỗi đề có task2Outline riêng gồm thesis + đúng 2 bodyParagraphs, mỗi bodyParagraph có đủ 4 field: mainPoint, explanation, example, realWorld). Đề bài phải thực tế, cụ thể, phong cách đề thi IELTS 2024-2026 — TRÁNH sáo rỗng kiểu "In today's modern world..." — viết như thí sinh Band 8 tư duy thật, không học thuộc mẫu.
 - trueFalseQuestions: đúng 4 câu, trộn đều cả 3 đáp án True/False/Not Given (không dồn hết vào 1 loại).
 - readingPassage: viết 1 đoạn văn TIẾNG ANH độc lập, văn phong học thuật kiểu IELTS Reading, dựa trên chủ đề/nội dung transcript nhưng KHÔNG dịch nguyên hay chép lại transcript — tự viết lại theo góc nhìn/luận điểm riêng. Độ dài khoảng 250-350 từ, chia thành 3-4 "paragraphs". Sinh khoảng 8-10 "questions", trộn đều 2 loại: "true_false_notgiven" (đáp án True/False/Not Given) và "mcq" (đúng 4 options, 1 correctIndex đúng). Câu hỏi phải trả lời được chỉ dựa vào chính đoạn văn readingPassage (không cần xem lại transcript gốc).
 - speakingPrompt.part2: đúng 4 bullet gợi ý; part3: đúng 3 câu hỏi mở rộng.

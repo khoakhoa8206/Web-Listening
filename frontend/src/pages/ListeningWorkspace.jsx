@@ -20,7 +20,13 @@ import { useLesson } from "../context/LessonContext";
 import { saveProgress } from "../services/api";
 
 function normalize(str) {
-  return String(str).trim().toLowerCase().replace(/\s+/g, " ");
+  return String(str)
+    .trim()
+    .toLowerCase()
+    .replace(/-/g, " ")
+    .replace(/['\u2018\u2019]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 // Lấy YouTube video id từ nhiều dạng link khác nhau
