@@ -11,8 +11,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // Phần 6.4 — Model chính hay bị quá tải (503 "high demand") vì là model mới/hot nhất của Google.
 // Cơ chế xử lý: thử lại vài lần với model chính (đợi tăng dần), nếu vẫn lỗi 503 thì chuyển hẳn
 // sang model dự phòng cũ hơn/ổn định hơn cho lần gọi cuối.
-const PRIMARY_MODEL = "gemini-3.5-flash";
-const FALLBACK_MODEL = "gemini-2.5-flash";
+const PRIMARY_MODEL = "gemini-2.5-flash";
+const FALLBACK_MODEL = "gemini-1.5-flash";
 const RETRY_DELAYS_MS = [2000, 5000]; // 2 lần thử lại với model chính trước khi fallback
 
 function isOverloadedError(err) {
@@ -216,15 +216,47 @@ export async function generateFullLesson(transcript, videoUrl, knownWords = [], 
 
   let raw = response.text;
 
-  // Phòng trường hợp model vẫn bọc ```json ... ``` dù đã dặn không làm vậy
-  raw = raw.trim().replace(/^```json\s*/i, "").replace(/```$/, "");
+  // Strip markdown code fences nếu model vẫn bọc dù đã dặn không
+  raw = raw.trim()
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```\s*$/g, "")
+    .trim();
 
   let parsed;
+
+  // Thử parse trực tiếp trước
   try {
     parsed = JSON.parse(raw);
-  } catch (err) {
-    console.error("Gemini trả về JSON không hợp lệ:", raw);
-    throw new Error("AI trả về dữ liệu không đúng định dạng JSON. Thử lại hoặc kiểm tra transcript đầu vào.");
+  } catch (firstErr) {
+    // Fallback 1: tìm khối JSON lớn nhất trong text (model thêm text thừa trước/sau)
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      try {
+        parsed = JSON.parse(jsonMatch[0]);
+      } catch {
+        // Fallback 2: JSON bị truncate — đếm ngoặc mở/đóng, thêm ngoặc đóng còn thiếu
+        const trunc = jsonMatch[0];
+        let opens = 0, closes = 0;
+        for (const ch of trunc) {
+          if (ch === "{") opens++;
+          else if (ch === "}") closes++;
+        }
+        const missing = opens - closes;
+        if (missing > 0) {
+          try { parsed = JSON.parse(trunc + "}".repeat(missing)); } catch {}
+        }
+      }
+    }
+
+    if (!parsed) {
+      console.error("[gemini] raw response (first 2000 chars):", raw.slice(0, 2000));
+      throw new Error(
+        "AI trả về dữ liệu không đúng định dạng JSON. " +
+        "Nguyên nhân thường gặp: transcript quá ngắn/có ký tự lạ, model bị timeout, hoặc response bị cắt. " +
+        "Thử lại, hoặc rút ngắn transcript nếu quá dài."
+      );
+    }
   }
 
   // Validate tối thiểu để frontend không bị crash nếu thiếu field
