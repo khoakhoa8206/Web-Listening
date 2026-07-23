@@ -80,6 +80,23 @@ router.post("/generate", requirePin, generateCooldown, async (req, res) => {
       generateFullLesson(transcript, videoUrl, knownWords, band, questionCount),
       fetchVideoTitle(videoUrl),
     ]);
+
+    // Post-processing: enforce vocab blank ≤ 3 words (trim if Gemini ignores constraint)
+    if (Array.isArray(lesson.dictation)) {
+      for (const sentence of lesson.dictation) {
+        if (!Array.isArray(sentence.segments)) continue;
+        for (const seg of sentence.segments) {
+          if (seg.type === "blank" && seg.blankType === "vocab" && typeof seg.answer === "string") {
+            const words = seg.answer.trim().split(/\s+/);
+            if (words.length > 3) {
+              // Keep only first 3 words
+              seg.answer = words.slice(0, 3).join(" ");
+              console.warn(`[word-count] vocab blank trimmed to 3 words: "${seg.answer}"`);
+            }
+          }
+        }
+      }
+    }
     const id = randomUUID();
 
     await pool.query(

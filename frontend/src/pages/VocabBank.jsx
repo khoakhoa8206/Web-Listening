@@ -100,7 +100,7 @@ export default function VocabBank() {
       <div className="mx-auto max-w-4xl">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-400">
               <BookMarked className="h-5 w-5 text-white" strokeWidth={2} />
             </div>
             <div>
@@ -115,7 +115,7 @@ export default function VocabBank() {
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => navigate("/flashcards")}
-                className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700"
+                className="flex items-center gap-1.5 rounded-lg bg-pink-400 px-3 py-2 text-xs font-semibold text-white hover:bg-pink-500"
               >
                 <Layers size={14} strokeWidth={2} />
                 Ôn từ (Flashcard)
@@ -145,7 +145,7 @@ export default function VocabBank() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Tìm theo từ hoặc nghĩa..."
-            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+            className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
           />
         </div>
 
@@ -169,7 +169,7 @@ export default function VocabBank() {
             </p>
             <button
               onClick={() => navigate("/videos")}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
             >
               <Sparkles size={16} strokeWidth={2} />
               Bắt đầu 1 bài học
@@ -222,8 +222,8 @@ export default function VocabBank() {
                 )}
 
                 {v.tip && (
-                  <div className="rounded-r-lg border-l-4 border-blue-600 bg-blue-50 p-3">
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                  <div className="rounded-r-lg border-l-4 border-pink-400 bg-pink-50 p-3">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-pink-600">
                       Gợi ý Speaking
                     </p>
                     <p className="text-sm text-slate-700">{v.tip}</p>

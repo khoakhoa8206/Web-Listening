@@ -48,7 +48,7 @@ export default function Reading() {
         <div className="flex max-w-sm flex-col items-center gap-3 rounded-xl bg-white p-8 text-center shadow-sm">
           {status === "generating" ? (
             <>
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
               <p className="text-sm font-medium text-slate-700">AI đang soạn bài đọc...</p>
             </>
           ) : status === "error" ? (
@@ -65,7 +65,7 @@ export default function Reading() {
           )}
           <button
             onClick={() => navigate("/videos")}
-            className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="mt-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
           >
             Chọn bài học
           </button>
@@ -84,7 +84,7 @@ export default function Reading() {
       <div className="mx-auto max-w-6xl">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-400">
             <BookOpenText className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
           <div>
@@ -210,7 +210,7 @@ export default function Reading() {
 
             <button
               onClick={() => navigate("/exploration")}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
             >
               Sang phần Khai thác (Writing/Từ vựng/Speaking)
               <ArrowRight size={18} strokeWidth={2} />

@@ -13,6 +13,8 @@ import {
   AlertTriangle,
   PlayCircle,
   ListChecks,
+  Download,
+  Save,
 } from "lucide-react";
 import { useLesson } from "../context/LessonContext";
 import { saveProgress } from "../services/api";
@@ -47,7 +49,7 @@ const Blank = React.forwardRef(function Blank(
   const width = Math.max(answer.length, value.length, 4) + 2;
   const isIdea = blankType === "idea";
 
-  let stateClasses = `${isIdea ? "border-dashed" : ""} border-slate-300 bg-white text-slate-900 focus:border-blue-600`;
+  let stateClasses = `${isIdea ? "border-dashed" : ""} border-slate-300 bg-white text-slate-900 focus:border-pink-400`;
   if (isCorrect) stateClasses = `${isIdea ? "border-dashed" : ""} border-emerald-600 bg-emerald-50 text-emerald-700`;
   if (isIncorrect) stateClasses = `${isIdea ? "border-dashed" : ""} border-red-500 bg-red-50 text-red-600`;
 
@@ -85,7 +87,7 @@ const Blank = React.forwardRef(function Blank(
 
 export default function ListeningWorkspace() {
   const navigate = useNavigate();
-  const { lessonId, videoUrl, title, dictation, status } = useLesson();
+  const { lessonId, videoUrl, title, dictation, status, exportLessonAsJSON, saveLessonToLocalStorage } = useLesson();
 
   const playerRef = useRef(null);
   const ytPlayerInstance = useRef(null);
@@ -248,7 +250,7 @@ export default function ListeningWorkspace() {
         <div className="flex max-w-sm flex-col items-center gap-3 rounded-xl bg-white p-8 text-center shadow-sm">
           {status === "generating" ? (
             <>
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
               <p className="text-sm font-medium text-slate-700">AI đang soạn bài dictation...</p>
             </>
           ) : status === "error" ? (
@@ -261,7 +263,7 @@ export default function ListeningWorkspace() {
           )}
           <button
             onClick={() => navigate("/videos")}
-            className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="mt-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
           >
             Chọn bài học
           </button>
@@ -275,7 +277,7 @@ export default function ListeningWorkspace() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
         <div className="flex max-w-md flex-col items-center gap-4 rounded-xl bg-white p-8 text-center shadow-sm">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-pink-50 text-pink-500">
             <ListChecks className="h-6 w-6" strokeWidth={2} />
           </div>
           <div>
@@ -287,9 +289,27 @@ export default function ListeningWorkspace() {
             với <span className="font-semibold text-slate-700">{BLANK_ORDER.length} chỗ trống</span>.
             Thời gian làm bài sẽ được tính từ lúc bạn bấm bắt đầu.
           </p>
+
+          {/* Nút lưu bài tập */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={saveLessonToLocalStorage}
+              className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
+            >
+              <Save className="h-3.5 w-3.5" />
+              Lưu tạm
+            </button>
+            <button
+              onClick={exportLessonAsJSON}
+              className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Tải xuống JSON
+            </button>
+          </div>
           <button
             onClick={handleStart}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
           >
             <PlayCircle size={18} strokeWidth={2} />
             Bắt đầu làm bài
@@ -318,7 +338,7 @@ export default function ListeningWorkspace() {
               <button
                 onClick={handleRepeatSentence}
                 disabled={!playerReady}
-                className="flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Repeat size={16} strokeWidth={2} />
                 Lặp lại câu này
@@ -358,7 +378,7 @@ export default function ListeningWorkspace() {
             </div>
             <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
               <div
-                className="h-full rounded-full bg-blue-600 transition-all"
+                className="h-full rounded-full bg-pink-400 transition-all"
                 style={{
                   width: `${
                     totalCount > 0
@@ -401,7 +421,7 @@ export default function ListeningWorkspace() {
                   key={sentence.id}
                   onClick={() => setActiveSentenceId(sentence.id)}
                   className={`cursor-pointer rounded-lg p-3 text-[15px] leading-8 text-slate-700 transition-colors ${
-                    activeSentenceId === sentence.id ? "bg-blue-50" : "hover:bg-slate-50"
+                    activeSentenceId === sentence.id ? "bg-pink-50" : "hover:bg-slate-50"
                   }`}
                 >
                   {sentence.segments.map((seg, i) =>
@@ -449,7 +469,7 @@ export default function ListeningWorkspace() {
             {isChecked ? (
               <button
                 onClick={() => navigate("/reading")}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
               >
                 Luyện Reading tiếp
                 <ArrowRight size={18} strokeWidth={2} />
@@ -457,7 +477,7 @@ export default function ListeningWorkspace() {
             ) : (
               <button
                 onClick={() => navigate("/exploration")}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
               >
                 Chuyển sang phần Luyện Ý Tưởng & Từ Vựng
                 <ArrowRight size={18} strokeWidth={2} />

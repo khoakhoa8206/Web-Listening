@@ -33,7 +33,7 @@ function Heatmap({ data }) {
     if (count === 0) return "bg-slate-100";
     const ratio = count / maxCount;
     if (ratio > 0.75) return "bg-blue-700";
-    if (ratio > 0.5) return "bg-blue-500";
+    if (ratio > 0.5) return "bg-pink-500";
     if (ratio > 0.25) return "bg-blue-300";
     return "bg-blue-200";
   };
@@ -69,7 +69,7 @@ function SkillBreakdown({ data }) {
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div
-              className="h-full rounded-full bg-blue-600"
+              className="h-full rounded-full bg-pink-400"
               style={{ width: `${(s.sessions / maxSessions) * 100}%` }}
             />
           </div>
@@ -87,7 +87,7 @@ const TABS = [
 
 function KpiCard({ icon: Icon, label, value, sub, accent = "blue" }) {
   const accentClasses =
-    accent === "emerald" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600";
+    accent === "emerald" ? "bg-emerald-50 text-emerald-600" : "bg-pink-50 text-pink-500";
 
   return (
     <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-5 flex flex-col gap-3">
@@ -122,7 +122,7 @@ function BarChart({ data }) {
             <span className="text-xs font-medium text-slate-500">{item.value.toFixed(1)}</span>
             <div className="w-full h-full flex items-end">
               <div
-                className={`w-full rounded-lg transition-all ${isTop ? "bg-blue-600" : "bg-blue-100"}`}
+                className={`w-full rounded-lg transition-all ${isTop ? "bg-pink-400" : "bg-blue-100"}`}
                 style={{ height: `${heightPct}%` }}
               />
             </div>
@@ -171,7 +171,7 @@ export default function AnalyticsReport() {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
-                activeTab === tab.key ? "bg-blue-600 text-white" : "text-slate-500 hover:text-slate-900"
+                activeTab === tab.key ? "bg-pink-400 text-white" : "text-slate-500 hover:text-slate-900"
               }`}
             >
               {tab.label}
@@ -235,9 +235,9 @@ export default function AnalyticsReport() {
                 <BarChart data={data.chart} />
               </div>
 
-              <div className="rounded-xl bg-blue-50 border border-blue-100 shadow-sm p-5 flex flex-col gap-3">
+              <div className="rounded-xl bg-pink-50 border border-blue-100 shadow-sm p-5 flex flex-col gap-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center shrink-0">
+                  <div className="w-8 h-8 rounded-lg bg-pink-400 flex items-center justify-center shrink-0">
                     <Sparkles size={16} className="text-white" />
                   </div>
                   <h2 className="text-sm font-semibold text-slate-900">Tiếp tục luyện tập</h2>
@@ -249,7 +249,7 @@ export default function AnalyticsReport() {
                 </p>
                 <button
                   onClick={() => navigate("/videos")}
-                  className="mt-auto self-start px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 transition-colors"
+                  className="mt-auto self-start px-4 py-2 rounded-lg bg-pink-400 text-white text-sm font-medium hover:bg-pink-500 transition-colors"
                 >
                   Luyện tập ngay
                 </button>
@@ -268,7 +268,7 @@ export default function AnalyticsReport() {
 
               <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-5">
                 <div className="mb-4 flex items-center gap-2">
-                  <TrendingUp size={16} className="text-blue-600" />
+                  <TrendingUp size={16} className="text-pink-500" />
                   <h2 className="text-sm font-semibold text-slate-900">Theo từng kỹ năng</h2>
                 </div>
                 <SkillBreakdown data={data.skillBreakdown} />

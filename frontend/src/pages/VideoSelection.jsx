@@ -12,6 +12,9 @@ import {
   Clock,
   ExternalLink,
   X,
+  Download,
+  Save,
+  RotateCcw,
 } from "lucide-react";
 import { checkTranscript, getTranscriptLink, searchVideos } from "../services/api";
 import { useLesson } from "../context/LessonContext";
@@ -36,7 +39,11 @@ function buildTranscriptSiteUrl(videoId) {
 
 export default function VideoSelection() {
   const navigate = useNavigate();
-  const { generateLesson, status: lessonStatus, error: lessonError } = useLesson();
+  const {
+    generateLesson, status: lessonStatus, error: lessonError,
+    exportLessonAsJSON, saveLessonToLocalStorage, loadLessonFromLocalStorage, hasSavedLesson,
+    title: savedTitle,
+  } = useLesson();
 
   const [link, setLink] = useState("");
   const [transcriptDraft, setTranscriptDraft] = useState(""); // transcript người dùng dán tay
@@ -213,7 +220,7 @@ export default function VideoSelection() {
                 onClick={() => setBand(b.value)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   band === b.value
-                    ? "bg-blue-600 text-white"
+                    ? "bg-pink-400 text-white"
                     : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
@@ -231,7 +238,7 @@ export default function VideoSelection() {
                 onClick={() => setQuestionCount(q.value)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
                   questionCount === q.value
-                    ? "bg-blue-600 text-white"
+                    ? "bg-pink-400 text-white"
                     : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
@@ -247,7 +254,7 @@ export default function VideoSelection() {
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="Dán link YouTube vào đây..."
-              className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
             />
           </div>
 
@@ -282,7 +289,7 @@ export default function VideoSelection() {
                 onChange={(e) => setTranscriptDraft(e.target.value)}
                 placeholder="Dán transcript đã copy từ trang trên vào đây..."
                 rows={4}
-                className="w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+                className="w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
               />
             </div>
           )}
@@ -292,7 +299,7 @@ export default function VideoSelection() {
             disabled={!canGenerateFromLink}
             className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors sm:w-auto ${
               canGenerateFromLink
-                ? "bg-blue-600 text-white hover:bg-blue-700"
+                ? "bg-pink-400 text-white hover:bg-pink-500"
                 : "cursor-not-allowed bg-slate-200 text-slate-400"
             }`}
           >
@@ -317,6 +324,41 @@ export default function VideoSelection() {
               Lỗi khi tạo bài: {lessonError}
             </div>
           )}
+
+          {/* Save buttons — chỉ hiện khi đã có bài sẵn sàng */}
+          {lessonStatus === "ready" && (
+            <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-pink-50 pt-4">
+              <span className="text-xs font-medium text-slate-400">Lưu bài tập:</span>
+              <button
+                onClick={saveLessonToLocalStorage}
+                className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
+              >
+                <Save className="h-3.5 w-3.5" />
+                Lưu tạm (trình duyệt)
+              </button>
+              <button
+                onClick={exportLessonAsJSON}
+                className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Tải xuống JSON
+              </button>
+            </div>
+          )}
+
+          {/* Restore from localStorage */}
+          {lessonStatus !== "ready" && hasSavedLesson() && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg bg-pink-50 border border-pink-100 px-3 py-2">
+              <RotateCcw className="h-3.5 w-3.5 shrink-0 text-pink-400" />
+              <span className="text-xs text-slate-600">Có bài tập đã lưu.</span>
+              <button
+                onClick={() => { loadLessonFromLocalStorage(); navigate("/listening"); }}
+                className="ml-auto text-xs font-semibold text-pink-500 hover:underline"
+              >
+                Tải lại →
+              </button>
+            </div>
+          )}
         </div>
 
         {/* ================= Khu vực 2: Bộ lọc thư viện ================= */}
@@ -328,7 +370,7 @@ export default function VideoSelection() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Tìm video theo từ khóa (VD: renewable energy)..."
-              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
             />
           </div>
 
@@ -341,7 +383,7 @@ export default function VideoSelection() {
                   onClick={() => setActiveTopic(topic)}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     isActive
-                      ? "bg-blue-600 text-white"
+                      ? "bg-pink-400 text-white"
                       : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
                   }`}
                 >
@@ -422,7 +464,7 @@ export default function VideoSelection() {
                     {video.title}
                   </h3>
                   <div className="flex items-center justify-between">
-                    <span className="rounded-lg bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-600">
+                    <span className="rounded-lg bg-pink-50 px-2 py-0.5 text-xs font-medium text-pink-500">
                       {video.channelTitle}
                     </span>
                   </div>
@@ -480,7 +522,7 @@ export default function VideoSelection() {
               onChange={(e) => setModalTranscript(e.target.value)}
               placeholder="Dán transcript đã copy từ trang trên vào đây..."
               rows={6}
-              className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600"
+              className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
             />
 
             {modalError && (
@@ -495,7 +537,7 @@ export default function VideoSelection() {
               disabled={!modalTranscript.trim() || lessonStatus === "generating" || cooldownSec > 0}
               className={`flex w-full items-center justify-center gap-2 rounded-lg px-5 py-2.5 text-sm font-semibold transition-colors ${
                 modalTranscript.trim() && lessonStatus !== "generating" && cooldownSec === 0
-                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  ? "bg-pink-400 text-white hover:bg-pink-500"
                   : "cursor-not-allowed bg-slate-200 text-slate-400"
               }`}
             >

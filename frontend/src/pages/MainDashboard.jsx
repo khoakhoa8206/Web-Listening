@@ -38,11 +38,11 @@ function isToday(dateString) {
 function scoreColor(score) {
   if (score == null) return "text-slate-400";
   if (score >= 7.5) return "text-emerald-600";
-  if (score >= 6) return "text-blue-600";
+  if (score >= 6) return "text-pink-500";
   return "text-slate-500";
 }
 
-function StatPill({ icon: Icon, value, label, accent = "text-blue-600" }) {
+function StatPill({ icon: Icon, value, label, accent = "text-pink-500" }) {
   return (
     <div className="flex items-center gap-3 rounded-xl bg-white px-4 py-3 shadow-sm">
       <div className={`flex h-10 w-10 items-center justify-center rounded-lg bg-slate-50 ${accent}`}>
@@ -176,7 +176,7 @@ export default function MainDashboard() {
               icon={BookMarked}
               value={summary?.wordsMastered ?? 0}
               label="Từ vựng đã lưu"
-              accent="text-blue-600"
+              accent="text-pink-500"
             />
             <StatPill
               icon={Headphones}
@@ -205,14 +205,14 @@ export default function MainDashboard() {
 
           <div className="mb-5 h-2 w-full overflow-hidden rounded-full bg-slate-100">
             <div
-              className="h-full rounded-full bg-blue-600 transition-all"
+              className="h-full rounded-full bg-pink-400 transition-all"
               style={{ width: `${Math.min((todayCount / DAILY_GOAL) * 100, 100)}%` }}
             />
           </div>
 
           <button
             onClick={() => navigate("/videos")}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-blue-700"
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
           >
             <Sparkles size={18} strokeWidth={2} />
             {todayCount === 0 ? "Chọn video & soạn bài mới" : "Soạn thêm bài luyện tập"}
@@ -234,7 +234,7 @@ export default function MainDashboard() {
                   onClick={() => setFilter(f.key)}
                   className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
                     filter === f.key
-                      ? "bg-blue-600 text-white"
+                      ? "bg-pink-400 text-white"
                       : "bg-slate-50 text-slate-500 hover:bg-slate-100"
                   }`}
                 >

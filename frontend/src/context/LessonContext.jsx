@@ -3,6 +3,8 @@ import { generateLesson as apiGenerateLesson, getLesson as apiGetLesson } from "
 
 const LessonContext = createContext(null);
 
+const STORAGE_KEY = "listening_ielts_lesson";
+
 export function LessonProvider({ children }) {
   const [lessonId, setLessonId] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
@@ -16,25 +18,93 @@ export function LessonProvider({ children }) {
   const [readingPassage, setReadingPassage] = useState(null);
   const [status, setStatus] = useState("idle"); // idle | generating | ready | error
   const [error, setError] = useState(null);
+  const [saveToast, setSaveToast] = useState(null); // null | "success" | "error"
 
-  // Gọi backend 1 lần duy nhất -> nhận đủ nội dung (nghe, viết, từ vựng, ý tưởng, T/F, speaking)
-  // questionCount: "it" | "vua" | "nhieu" — số lượng blank trong dictation
+  const applyData = (data, url) => {
+    setLessonId(data.lessonId);
+    setVideoUrl(url || data.videoUrl);
+    setTitle(data.title || url || data.videoUrl);
+    setDictation(data.dictation);
+    setWritingQuestions(data.writingQuestions);
+    setVocabCards(data.vocabCards);
+    setIdeaBank(data.ideaBank);
+    setTrueFalseQuestions(data.trueFalseQuestions);
+    setSpeakingPrompt(data.speakingPrompt);
+    setReadingPassage(data.readingPassage || null);
+    setStatus("ready");
+  };
+
+  // --- Xuất bài tập dưới dạng JSON file ---
+  const exportLessonAsJSON = useCallback(() => {
+    try {
+      const payload = {
+        lessonId, videoUrl, title, dictation, writingQuestions,
+        vocabCards, ideaBank, trueFalseQuestions, speakingPrompt, readingPassage,
+        exportedAt: new Date().toISOString(),
+      };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      const safeName = (title || "lesson").replace(/[^a-z0-9]/gi, "_").toLowerCase().slice(0, 40);
+      a.download = `ielts_${safeName}_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      setSaveToast("success");
+      setTimeout(() => setSaveToast(null), 3000);
+    } catch (err) {
+      console.error("exportLessonAsJSON error:", err);
+      setSaveToast("error");
+      setTimeout(() => setSaveToast(null), 3000);
+    }
+  }, [lessonId, videoUrl, title, dictation, writingQuestions, vocabCards, ideaBank, trueFalseQuestions, speakingPrompt, readingPassage]);
+
+  // --- Lưu bài tập vào LocalStorage ---
+  const saveLessonToLocalStorage = useCallback(() => {
+    try {
+      const payload = {
+        lessonId, videoUrl, title, dictation, writingQuestions,
+        vocabCards, ideaBank, trueFalseQuestions, speakingPrompt, readingPassage,
+        savedAt: new Date().toISOString(),
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+      setSaveToast("success");
+      setTimeout(() => setSaveToast(null), 3000);
+    } catch (err) {
+      console.error("saveLessonToLocalStorage error:", err);
+      setSaveToast("error");
+      setTimeout(() => setSaveToast(null), 3000);
+    }
+  }, [lessonId, videoUrl, title, dictation, writingQuestions, vocabCards, ideaBank, trueFalseQuestions, speakingPrompt, readingPassage]);
+
+  // --- Tải lại bài tập đã lưu trong LocalStorage ---
+  const loadLessonFromLocalStorage = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return false;
+      const data = JSON.parse(raw);
+      applyData(data, data.videoUrl);
+      return true;
+    } catch (err) {
+      console.error("loadLessonFromLocalStorage error:", err);
+      return false;
+    }
+  }, []);
+
+  const hasSavedLesson = useCallback(() => {
+    try { return !!localStorage.getItem(STORAGE_KEY); }
+    catch { return false; }
+  }, []);
+
   const generateLesson = useCallback(async (url, transcript, topic, band, questionCount) => {
     setStatus("generating");
     setError(null);
     try {
       const data = await apiGenerateLesson(url, transcript, topic, band, questionCount);
-      setLessonId(data.lessonId);
-      setVideoUrl(url);
-      setTitle(data.title || url);
-      setDictation(data.dictation);
-      setWritingQuestions(data.writingQuestions);
-      setVocabCards(data.vocabCards);
-      setIdeaBank(data.ideaBank);
-      setTrueFalseQuestions(data.trueFalseQuestions);
-      setSpeakingPrompt(data.speakingPrompt);
-      setReadingPassage(data.readingPassage || null);
-      setStatus("ready");
+      applyData(data, url);
+      // Auto-save to localStorage after each successful generation
+      const payload = { ...data, videoUrl: url, savedAt: new Date().toISOString() };
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); } catch {}
       return data;
     } catch (err) {
       console.error("generateLesson error:", err);
@@ -44,23 +114,12 @@ export function LessonProvider({ children }) {
     }
   }, []);
 
-  // Mở lại 1 bài học đã có sẵn (nút "Làm lại") — không gọi lại Gemini
   const loadLesson = useCallback(async (id) => {
     setStatus("generating");
     setError(null);
     try {
       const data = await apiGetLesson(id);
-      setLessonId(data.lessonId);
-      setVideoUrl(data.videoUrl);
-      setTitle(data.title || data.videoUrl);
-      setDictation(data.dictation);
-      setWritingQuestions(data.writingQuestions);
-      setVocabCards(data.vocabCards);
-      setIdeaBank(data.ideaBank);
-      setTrueFalseQuestions(data.trueFalseQuestions);
-      setSpeakingPrompt(data.speakingPrompt);
-      setReadingPassage(data.readingPassage || null);
-      setStatus("ready");
+      applyData(data, data.videoUrl);
       return data;
     } catch (err) {
       console.error("loadLesson error:", err);
@@ -71,38 +130,21 @@ export function LessonProvider({ children }) {
   }, []);
 
   const reset = useCallback(() => {
-    setLessonId(null);
-    setVideoUrl(null);
-    setTitle(null);
-    setDictation(null);
-    setWritingQuestions(null);
-    setVocabCards(null);
-    setIdeaBank(null);
-    setTrueFalseQuestions(null);
-    setSpeakingPrompt(null);
-    setReadingPassage(null);
-    setStatus("idle");
-    setError(null);
+    setLessonId(null); setVideoUrl(null); setTitle(null);
+    setDictation(null); setWritingQuestions(null); setVocabCards(null);
+    setIdeaBank(null); setTrueFalseQuestions(null); setSpeakingPrompt(null);
+    setReadingPassage(null); setStatus("idle"); setError(null);
   }, []);
 
   return (
     <LessonContext.Provider
       value={{
-        lessonId,
-        videoUrl,
-        title,
-        dictation,
-        writingQuestions,
-        vocabCards,
-        ideaBank,
-        trueFalseQuestions,
-        speakingPrompt,
-        readingPassage,
-        status,
-        error,
-        generateLesson,
-        loadLesson,
-        reset,
+        lessonId, videoUrl, title, dictation, writingQuestions, vocabCards,
+        ideaBank, trueFalseQuestions, speakingPrompt, readingPassage,
+        status, error, saveToast,
+        generateLesson, loadLesson, reset,
+        exportLessonAsJSON, saveLessonToLocalStorage,
+        loadLessonFromLocalStorage, hasSavedLesson,
       }}
     >
       {children}

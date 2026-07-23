@@ -55,7 +55,7 @@ export default function IELTSExploration() {
         <div className="flex max-w-sm flex-col items-center gap-3 rounded-xl bg-white p-8 text-center shadow-sm">
           {status === "generating" ? (
             <>
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+              <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
               <p className="text-sm font-medium text-slate-700">AI đang soạn nội dung khai thác...</p>
             </>
           ) : status === "error" ? (
@@ -68,7 +68,7 @@ export default function IELTSExploration() {
           )}
           <button
             onClick={() => navigate("/videos")}
-            className="mt-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+            className="mt-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
           >
             Chọn bài học
           </button>
@@ -82,7 +82,7 @@ export default function IELTSExploration() {
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-400">
             <Sparkles className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
           <div>
@@ -105,7 +105,7 @@ export default function IELTSExploration() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-blue-600 text-white"
+                    ? "bg-pink-400 text-white"
                     : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                 }`}
               >
@@ -171,7 +171,7 @@ function WritingFocusTab({ lessonId, writingQuestions }) {
 
         return (
           <div key={q.id} className="rounded-xl bg-white p-6 shadow-sm">
-            <span className="mb-3 inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600">
+            <span className="mb-3 inline-block rounded-lg bg-pink-50 px-2.5 py-1 text-xs font-semibold text-pink-500">
               {q.tag}
             </span>
             <p className="mb-4 font-semibold text-slate-900">{q.question}</p>
@@ -392,7 +392,7 @@ function VocabularyTab({ lessonId, vocabCards }) {
                     {card.phonetic}
                   </p>
                 </div>
-                <span className="shrink-0 rounded-lg bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-600">
+                <span className="shrink-0 rounded-lg bg-pink-50 px-2 py-1 text-xs font-semibold text-pink-500">
                   Part 2+3
                 </span>
               </div>
@@ -401,7 +401,7 @@ function VocabularyTab({ lessonId, vocabCards }) {
 
               <button
                 onClick={() => toggleExpand(card.id)}
-                className="mb-3 flex items-center gap-1 self-start text-xs font-medium text-blue-600 hover:text-blue-700"
+                className="mb-3 flex items-center gap-1 self-start text-xs font-medium text-pink-500 hover:text-pink-600"
               >
                 {isExpanded ? "Ẩn ngữ cảnh" : "Xem ngữ cảnh"}
                 {isExpanded ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
@@ -413,8 +413,8 @@ function VocabularyTab({ lessonId, vocabCards }) {
                     <Quote className="h-4 w-4 shrink-0 text-slate-400" />
                     <p className="text-sm italic text-slate-600">{card.source}</p>
                   </div>
-                  <div className="rounded-r-lg border-l-4 border-blue-600 bg-blue-50 p-3">
-                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                  <div className="rounded-r-lg border-l-4 border-pink-400 bg-pink-50 p-3">
+                    <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-pink-600">
                       Gợi ý Speaking
                     </p>
                     <p className="text-sm text-slate-700">{card.tip}</p>
@@ -426,7 +426,7 @@ function VocabularyTab({ lessonId, vocabCards }) {
                 onClick={() => toggleSave(card)}
                 disabled={isLoading}
                 className={`mt-auto flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-60 ${
-                  isSaved ? "bg-emerald-50 text-emerald-700" : "bg-blue-600 text-white hover:bg-blue-700"
+                  isSaved ? "bg-emerald-50 text-emerald-700" : "bg-pink-400 text-white hover:bg-pink-500"
                 }`}
               >
                 {isLoading ? (
@@ -544,7 +544,7 @@ function SpeakingRecorder({ promptText, part }) {
           <button
             onClick={handleGrade}
             disabled={grading}
-            className="flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+            className="flex items-center gap-1.5 rounded-lg bg-pink-400 px-3 py-2 text-xs font-semibold text-white hover:bg-pink-500 disabled:opacity-60"
           >
             {grading ? (
               <>
@@ -623,7 +623,7 @@ function SpeakingTab({ lessonId, speakingPrompt }) {
   return (
     <div className="space-y-5">
       <div className="rounded-xl bg-white p-6 shadow-sm">
-        <span className="mb-3 inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600">
+        <span className="mb-3 inline-block rounded-lg bg-pink-50 px-2.5 py-1 text-xs font-semibold text-pink-500">
           Speaking Part 2
         </span>
         <p className="mb-3 font-semibold text-slate-900">{speakingPrompt.part2.cueCard}</p>
@@ -644,7 +644,7 @@ function SpeakingTab({ lessonId, speakingPrompt }) {
 
       {speakingPrompt.part3?.length > 0 && (
         <div className="rounded-xl bg-white p-6 shadow-sm">
-          <span className="mb-3 inline-block rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600">
+          <span className="mb-3 inline-block rounded-lg bg-pink-50 px-2.5 py-1 text-xs font-semibold text-pink-500">
             Speaking Part 3
           </span>
           <div className="space-y-3">
@@ -704,8 +704,8 @@ function IdeaBankTab({ ideaBank }) {
                   <p className="text-sm italic text-slate-700">{idea.en}</p>
                 </div>
 
-                <div className="mb-3 rounded-r-lg border-l-4 border-blue-600 bg-blue-50 p-3">
-                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
+                <div className="mb-3 rounded-r-lg border-l-4 border-pink-400 bg-pink-50 p-3">
+                  <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-pink-600">
                     Cách áp dụng vào bài viết
                   </p>
                   <p className="text-sm text-slate-700">{idea.application}</p>

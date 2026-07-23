@@ -58,7 +58,7 @@ export default function Flashcards() {
     <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-xl">
         <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-600">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-400">
             <Layers className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
           <div>
@@ -89,7 +89,7 @@ export default function Flashcards() {
             </p>
             <button
               onClick={() => navigate("/vocab")}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
             >
               <BookMarked size={16} strokeWidth={2} />
               Xem kho từ vựng
@@ -103,7 +103,7 @@ export default function Flashcards() {
             </p>
             <button
               onClick={() => navigate("/vocab")}
-              className="flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700"
+              className="flex items-center gap-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
             >
               <BookMarked size={16} strokeWidth={2} />
               Xem kho từ vựng
@@ -114,7 +114,7 @@ export default function Flashcards() {
             {/* Thanh tiến độ */}
             <div className="mb-4 h-1.5 w-full overflow-hidden rounded-full bg-slate-200">
               <div
-                className="h-full rounded-full bg-blue-600 transition-all"
+                className="h-full rounded-full bg-pink-400 transition-all"
                 style={{ width: `${(doneCount / total) * 100}%` }}
               />
             </div>
@@ -126,7 +126,7 @@ export default function Flashcards() {
             >
               {!flipped ? (
                 <>
-                  <span className="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600">
+                  <span className="rounded-lg bg-pink-50 px-2.5 py-1 text-xs font-semibold text-pink-500">
                     Box {current.box || 1}
                   </span>
                   <p className="text-2xl font-bold text-slate-900">{current.word}</p>
