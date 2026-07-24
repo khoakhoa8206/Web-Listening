@@ -11,8 +11,8 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 // Phần 6.4 — Model chính hay bị quá tải (503 "high demand") vì là model mới/hot nhất của Google.
 // Cơ chế xử lý: thử lại vài lần với model chính (đợi tăng dần), nếu vẫn lỗi 503 thì chuyển hẳn
 // sang model dự phòng cũ hơn/ổn định hơn cho lần gọi cuối.
-const PRIMARY_MODEL = "gemini-2.5-flash";
-const FALLBACK_MODEL = "gemini-1.5-flash";
+const PRIMARY_MODEL = "gemini-3.5-flash";
+const FALLBACK_MODEL = "gemini-3.1-flash";
 const RETRY_DELAYS_MS = [2000, 5000]; // 2 lần thử lại với model chính trước khi fallback
 
 function isOverloadedError(err) {
