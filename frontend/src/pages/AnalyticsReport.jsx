@@ -15,16 +15,16 @@ import { getProgressSummary } from "../services/api";
 
 const SKILL_LABELS = {
   Listening: "Nghe",
-  Writing: "Viết",
-  Reading: "Đọc",
-  Speaking: "Nói",
-  Vocabulary: "Từ vựng",
+  Writing: "Writing",
+  Reading: "Reading",
+  Speaking: "Speaking",
+  Vocabulary: "Vocabulary",
 };
 
 // Phần 5.4 — Heatmap đơn giản: 1 ô = 1 ngày, màu đậm dần theo số lượt luyện tập trong ngày đó.
 function Heatmap({ data }) {
   if (!data || data.length === 0) {
-    return <p className="text-sm text-slate-400">Chưa có dữ liệu hoạt động để vẽ heatmap.</p>;
+    return <p className="text-sm text-slate-400">No activity data yet to display heatmap.</p>;
   }
   const maxCount = Math.max(...data.map((d) => d.count), 1);
   const sorted = [...data].sort((a, b) => a.date.localeCompare(b.date));
@@ -43,7 +43,7 @@ function Heatmap({ data }) {
       {sorted.map((d) => (
         <div
           key={d.date}
-          title={`${d.date}: ${d.count} lượt`}
+          title={`${d.date}: ${d.count} session(s)`}
           className={`h-4 w-4 rounded-sm ${colorFor(d.count)}`}
         />
       ))}
@@ -54,7 +54,7 @@ function Heatmap({ data }) {
 // Phần 5.4 — Phân tích điểm yếu theo từng kỹ năng: số lượt luyện tập + điểm TB (nếu có) mỗi kỹ năng.
 function SkillBreakdown({ data }) {
   if (!data || data.length === 0) {
-    return <p className="text-sm text-slate-400">Chưa có dữ liệu theo kỹ năng.</p>;
+    return <p className="text-sm text-slate-400">No skill data available yet.</p>;
   }
   const maxSessions = Math.max(...data.map((s) => s.sessions), 1);
   return (
@@ -64,7 +64,7 @@ function SkillBreakdown({ data }) {
           <div className="mb-1 flex items-center justify-between text-xs">
             <span className="font-medium text-slate-700">{SKILL_LABELS[s.type] || s.type}</span>
             <span className="text-slate-400">
-              {s.sessions} lượt · {s.minutes} phút{s.avgScore != null ? ` · TB ${s.avgScore}` : ""}
+              {s.sessions} session(s) · {s.minutes} min{s.avgScore != null ? ` · Avg ${s.avgScore}` : ""}
             </span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
@@ -80,9 +80,9 @@ function SkillBreakdown({ data }) {
 }
 
 const TABS = [
-  { key: "week", label: "Tuần này" },
-  { key: "month", label: "Tháng này" },
-  { key: "all", label: "Tất cả" },
+  { key: "week", label: "This Week" },
+  { key: "month", label: "This Month" },
+  { key: "all", label: "All Time" },
 ];
 
 function KpiCard({ icon: Icon, label, value, sub, accent = "blue" }) {
@@ -108,7 +108,7 @@ function BarChart({ data }) {
   if (!data || data.length === 0) {
     return (
       <div className="flex h-48 items-center justify-center text-sm text-slate-400">
-        Chưa có dữ liệu điểm nghe để vẽ biểu đồ.
+        No listening score data yet to display chart.
       </div>
     );
   }
@@ -148,7 +148,7 @@ export default function AnalyticsReport() {
       .then(setData)
       .catch((err) => {
         console.error("summary error:", err);
-        setError("Không tải được báo cáo. Kiểm tra backend đã chạy ở :8787 chưa.");
+        setError("Failed to load report. Make sure the backend is running on :8787.");
       })
       .finally(() => setLoading(false));
   }, [activeTab]);
@@ -158,9 +158,9 @@ export default function AnalyticsReport() {
       <div className="max-w-5xl mx-auto flex flex-col gap-6">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-semibold text-slate-900">Báo cáo tiến độ</h1>
+          <h1 className="text-2xl font-semibold text-slate-900">Progress Report</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Theo dõi kết quả luyện nghe và tiến bộ IELTS của bạn theo thời gian.
+            Track your listening results and IELTS progress over time.
           </p>
         </div>
 
@@ -189,7 +189,7 @@ export default function AnalyticsReport() {
         {loading || !data ? (
           <div className="flex items-center justify-center gap-2 py-16">
             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-            <p className="text-sm text-slate-500">Đang tải báo cáo...</p>
+            <p className="text-sm text-slate-500">Loading report...</p>
           </div>
         ) : (
           <>
@@ -197,30 +197,30 @@ export default function AnalyticsReport() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <KpiCard
                 icon={Headphones}
-                label="Điểm Nghe Trung Bình"
+                label="Avg. Listening Score"
                 value={`${data.band.toFixed(1)} Band`}
-                sub={`Dựa trên ${data.lessonsCompleted} lượt luyện tập`}
+                sub={`Based on ${data.lessonsCompleted} practice session(s)`}
                 accent="blue"
               />
               <KpiCard
                 icon={Clock}
-                label="Tổng thời gian luyện tập"
-                value={`${data.minutes} phút`}
-                sub="Cộng dồn tất cả kỹ năng"
+                label="Total Practice Time"
+                value={`${data.minutes} min`}
+                sub="Across all skills"
                 accent="blue"
               />
               <KpiCard
                 icon={BookMarked}
-                label="Từ vựng đã lưu"
-                value={`${data.wordsMastered} từ`}
-                sub="Trong kho từ vựng cá nhân"
+                label="Vocab Saved"
+                value={`${data.wordsMastered} word(s)`}
+                sub="In your personal vocabulary bank"
                 accent="emerald"
               />
               <KpiCard
                 icon={Target}
-                label="Chuỗi ngày liên tục"
-                value={`${data.streakDays} ngày`}
-                sub="Luyện tập liên tiếp"
+                label="Day Streak"
+                value={`${data.streakDays} day(s)`}
+                sub="Consecutive practice days"
                 accent="emerald"
               />
             </div>
@@ -229,8 +229,8 @@ export default function AnalyticsReport() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <div className="lg:col-span-2 rounded-xl bg-white border border-slate-200 shadow-sm p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm font-semibold text-slate-900">Biến động Band điểm nghe</h2>
-                  <span className="text-xs text-slate-400">Thang điểm 1.0 – 9.0</span>
+                  <h2 className="text-sm font-semibold text-slate-900">Listening Band Trend</h2>
+                  <span className="text-xs text-slate-400">Scale 1.0 – 9.0</span>
                 </div>
                 <BarChart data={data.chart} />
               </div>
@@ -240,18 +240,18 @@ export default function AnalyticsReport() {
                   <div className="w-8 h-8 rounded-lg bg-pink-400 flex items-center justify-center shrink-0">
                     <Sparkles size={16} className="text-white" />
                   </div>
-                  <h2 className="text-sm font-semibold text-slate-900">Tiếp tục luyện tập</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">Keep Practising</h2>
                 </div>
                 <p className="text-sm text-slate-700 leading-relaxed">
                   {data.lessonsCompleted === 0
-                    ? "Bạn chưa có bài luyện tập nào. Hãy chọn một video để AI soạn bài đầu tiên cho bạn."
-                    : `Bạn đã hoàn thành ${data.lessonsCompleted} lượt luyện tập trong khoảng thời gian này. Duy trì đều đặn để cải thiện band điểm.`}
+                    ? "You have no practice sessions yet. Select a video to let AI create your first lesson."
+                    : `You've completed ${data.lessonsCompleted} practice session(s) in this period. Keep it up to improve your band score.`}
                 </p>
                 <button
                   onClick={() => navigate("/videos")}
                   className="mt-auto self-start px-4 py-2 rounded-lg bg-pink-400 text-white text-sm font-medium hover:bg-pink-500 transition-colors"
                 >
-                  Luyện tập ngay
+                  Practice Now
                 </button>
               </div>
             </div>
@@ -261,7 +261,7 @@ export default function AnalyticsReport() {
               <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <Flame size={16} className="text-orange-500" />
-                  <h2 className="text-sm font-semibold text-slate-900">Bản đồ hoạt động</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">Activity Heatmap</h2>
                 </div>
                 <Heatmap data={data.heatmap} />
               </div>
@@ -269,7 +269,7 @@ export default function AnalyticsReport() {
               <div className="rounded-xl bg-white border border-slate-200 shadow-sm p-5">
                 <div className="mb-4 flex items-center gap-2">
                   <TrendingUp size={16} className="text-pink-500" />
-                  <h2 className="text-sm font-semibold text-slate-900">Theo từng kỹ năng</h2>
+                  <h2 className="text-sm font-semibold text-slate-900">By Skill</h2>
                 </div>
                 <SkillBreakdown data={data.skillBreakdown} />
               </div>

@@ -24,8 +24,8 @@ import { getSavedVocab, saveVocab, deleteVocab } from "../services/api";
 
 // Chỉ giữ 2 tab: Ý tưởng + Tổng kết
 const TABS = [
-  { id: "ideas", label: "Ý tưởng", icon: Lightbulb },
-  { id: "vocab", label: "Tổng kết", icon: Layers },
+  { id: "ideas", label: "Ideas", icon: Lightbulb },
+  { id: "vocab", label: "Summary", icon: Layers },
 ];
 
 export default function IELTSExploration() {
@@ -40,21 +40,21 @@ export default function IELTSExploration() {
           {status === "generating" ? (
             <>
               <Loader2 className="h-8 w-8 animate-spin text-pink-400" />
-              <p className="text-sm font-medium text-slate-700">AI đang soạn nội dung khai thác...</p>
+              <p className="text-sm font-medium text-slate-700">AI is preparing content...</p>
             </>
           ) : status === "error" ? (
             <>
               <AlertTriangle className="h-8 w-8 text-red-500" />
-              <p className="text-sm font-medium text-slate-700">Tạo nội dung thất bại.</p>
+              <p className="text-sm font-medium text-slate-700">Content generation failed.</p>
             </>
           ) : (
-            <p className="text-sm text-slate-500">Bạn chưa chọn bài học nào.</p>
+            <p className="text-sm text-slate-500">No lesson selected.</p>
           )}
           <button
             onClick={() => navigate("/videos")}
             className="mt-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
           >
-            Chọn bài học
+            Select Lesson
           </button>
         </div>
       </div>
@@ -69,9 +69,9 @@ export default function IELTSExploration() {
             <Sparkles className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Khai thác IELTS</h1>
+            <h1 className="text-xl font-bold text-slate-900">IELTS Exploration</h1>
             <p className="text-sm text-slate-500">
-              Bài nghe:{" "}
+              Lesson:{" "}
               <span className="font-medium text-slate-700">{title || videoUrl || "—"}</span>
             </p>
           </div>
@@ -112,8 +112,8 @@ function IdeaBankTab({ ideaBank }) {
   return (
     <div className="space-y-10">
       <p className="text-sm text-slate-500">
-        Ý tưởng Writing Task 2 thực tế rút từ bài nghe — mỗi topic có{" "}
-        <span className="font-medium text-slate-700">3 đề bài</span> kèm dàn bài đầy đủ.
+        Real Writing Task 2 ideas from the lesson — each topic has{" "}
+        <span className="font-medium text-slate-700">3 essay questions</span> with full outlines.
       </p>
 
       {ideaBank.map((group) => (
@@ -136,13 +136,13 @@ function IdeaBankTab({ ideaBank }) {
                   </div>
                   <div className="mb-3 rounded-r-lg border-l-4 border-pink-400 bg-pink-50 p-3">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-pink-600">
-                      Cách áp dụng vào bài viết
+                      How to apply in your essay
                     </p>
                     <p className="text-sm text-slate-700">{idea.application}</p>
                   </div>
                   <div className="rounded-r-lg border-l-4 border-emerald-500 bg-emerald-50 p-3">
                     <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                      <PenLine className="h-3.5 w-3.5" /> Câu mẫu Writing
+                      <PenLine className="h-3.5 w-3.5" /> Sample Writing Sentence
                     </p>
                     <p className="text-sm text-slate-700">{idea.sample}</p>
                   </div>
@@ -164,7 +164,7 @@ function IdeaBankTab({ ideaBank }) {
 }
 
 function Task2Card({ item, index }) {
-  const [open, setOpen] = useState(index === 0);
+  const [open, setOpen] = useState(true);
   const outline = item.task2Outline;
 
   return (
@@ -190,7 +190,7 @@ function Task2Card({ item, index }) {
           {/* Thesis */}
           <div className="rounded-lg bg-slate-50 p-3">
             <p className="mb-1 text-xs font-bold uppercase tracking-wide text-slate-500">
-              Luận điểm chính (Thesis)
+              Main Argument (Thesis)
             </p>
             <p className="text-sm text-slate-800 font-medium">{outline.thesis}</p>
           </div>
@@ -202,27 +202,27 @@ function Task2Card({ item, index }) {
               className="rounded-r-lg border-l-4 border-pink-300 bg-pink-50 p-4 space-y-2"
             >
               <p className="text-xs font-bold uppercase tracking-wide text-pink-600">
-                Đoạn thân bài {pIdx + 1}
+                Body Paragraph {pIdx + 1}
               </p>
 
               <div>
-                <p className="text-xs font-semibold text-slate-600 mb-0.5">📌 Luận điểm</p>
+                <p className="text-xs font-semibold text-slate-600 mb-0.5">📌 Main Point</p>
                 <p className="text-sm text-slate-800">{para.mainPoint}</p>
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-slate-600 mb-0.5">💡 Giải thích</p>
+                <p className="text-xs font-semibold text-slate-600 mb-0.5">💡 Explanation</p>
                 <p className="text-sm text-slate-700">{para.explanation}</p>
               </div>
 
               <div>
-                <p className="text-xs font-semibold text-slate-600 mb-0.5">📖 Ví dụ</p>
+                <p className="text-xs font-semibold text-slate-600 mb-0.5">📖 Example</p>
                 <p className="text-sm italic text-slate-700">{para.example}</p>
               </div>
 
               {para.realWorld && (
                 <div>
-                  <p className="text-xs font-semibold text-slate-600 mb-0.5">🌍 Liên hệ thực tế</p>
+                  <p className="text-xs font-semibold text-slate-600 mb-0.5">🌍 Real-World Link</p>
                   <p className="text-sm text-slate-700">{para.realWorld}</p>
                 </div>
               )}
@@ -301,8 +301,7 @@ function VocabSummaryTab({ vocabCards }) {
   return (
     <div className="space-y-5">
       <p className="text-sm text-slate-500">
-        Từ vựng & cụm từ từ bài nghe — bao gồm loại từ, chủ đề áp dụng, ví dụ thực tế, và gợi ý
-        dùng trong <span className="font-medium text-slate-700">Writing & Speaking</span>.
+        Vocabulary & phrases from the lesson — includes word type, IELTS topic, real examples, and tips for <span className="font-medium text-slate-700">Writing & Speaking</span>.
       </p>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -324,7 +323,7 @@ function VocabSummaryTab({ vocabCards }) {
                   <h3 className="text-base font-bold text-slate-900">{card.word}</h3>
                   <button
                     onClick={() => speak(card.word)}
-                    title="Nghe phát âm"
+                    title="Listen to pronunciation"
                     className="mt-0.5 flex items-center gap-1 text-sm text-slate-400 hover:text-pink-500 transition-colors"
                   >
                     <Volume2 className="h-3.5 w-3.5" strokeWidth={2} />
@@ -353,7 +352,7 @@ function VocabSummaryTab({ vocabCards }) {
                 onClick={() => toggleExpand(card.id)}
                 className="mb-3 flex items-center gap-1 self-start text-xs font-medium text-pink-500 hover:text-pink-600"
               >
-                {isExpanded ? "Ẩn chi tiết" : "Xem chi tiết"}
+                {isExpanded ? "Hide details" : "Show details"}
                 {isExpanded ? (
                   <ChevronUp className="h-3.5 w-3.5" />
                 ) : (
@@ -368,7 +367,7 @@ function VocabSummaryTab({ vocabCards }) {
                     <div className="flex gap-2 rounded-lg bg-slate-50 p-3">
                       <Quote className="h-4 w-4 shrink-0 text-slate-400" />
                       <div>
-                        <p className="mb-0.5 text-xs font-semibold text-slate-500">Ví dụ thực tế</p>
+                        <p className="mb-0.5 text-xs font-semibold text-slate-500">Real Example</p>
                         <p className="text-sm italic text-slate-700">{card.example}</p>
                       </div>
                     </div>
@@ -379,7 +378,7 @@ function VocabSummaryTab({ vocabCards }) {
                     <div className="flex gap-2 rounded-lg bg-amber-50 p-3">
                       <BookOpen className="h-4 w-4 shrink-0 text-amber-500" />
                       <div>
-                        <p className="mb-0.5 text-xs font-semibold text-amber-700">Câu gốc trong bài</p>
+                        <p className="mb-0.5 text-xs font-semibold text-amber-700">Source sentence from lesson</p>
                         <p className="text-sm italic text-slate-600">{card.source}</p>
                       </div>
                     </div>
@@ -389,7 +388,7 @@ function VocabSummaryTab({ vocabCards }) {
                   {card.collocations?.length > 0 && (
                     <div className="rounded-lg bg-blue-50 p-3">
                       <p className="mb-1.5 text-xs font-semibold text-blue-700">
-                        Collocations liên quan
+                        Related Collocations
                       </p>
                       <div className="flex flex-wrap gap-1.5">
                         {card.collocations.map((c, i) => (
@@ -450,11 +449,11 @@ function VocabSummaryTab({ vocabCards }) {
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : isSaved ? (
                   <>
-                    <BookmarkCheck className="h-4 w-4" strokeWidth={2} /> Đã lưu
+                    <BookmarkCheck className="h-4 w-4" strokeWidth={2} /> Saved
                   </>
                 ) : (
                   <>
-                    <Bookmark className="h-4 w-4" strokeWidth={2} /> Lưu vào kho từ vựng
+                    <Bookmark className="h-4 w-4" strokeWidth={2} /> Save to Vocabulary Bank
                   </>
                 )}
               </button>

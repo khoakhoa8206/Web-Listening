@@ -49,25 +49,25 @@ export default function Reading() {
           {status === "generating" ? (
             <>
               <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
-              <p className="text-sm font-medium text-slate-700">AI đang soạn bài đọc...</p>
+              <p className="text-sm font-medium text-slate-700">AI is preparing your reading...</p>
             </>
           ) : status === "error" ? (
             <>
               <AlertTriangle className="h-8 w-8 text-red-500" />
-              <p className="text-sm font-medium text-slate-700">Tạo bài đọc thất bại.</p>
+              <p className="text-sm font-medium text-slate-700">Reading generation failed.</p>
             </>
           ) : status === "ready" && !readingPassage ? (
             <p className="text-sm text-slate-500">
-              Bài học này chưa có phần Reading (có thể được tạo trước khi tính năng này ra mắt).
+              This lesson does not have a Reading section (it may have been created before this feature launched).
             </p>
           ) : (
-            <p className="text-sm text-slate-500">Bạn chưa chọn bài học nào.</p>
+            <p className="text-sm text-slate-500">No lesson selected.</p>
           )}
           <button
             onClick={() => navigate("/videos")}
             className="mt-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
           >
-            Chọn bài học
+            Select Lesson
           </button>
         </div>
       </div>
@@ -88,9 +88,9 @@ export default function Reading() {
             <BookOpenText className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Luyện Reading</h1>
+            <h1 className="text-xl font-bold text-slate-900">Reading Practice</h1>
             <p className="text-sm text-slate-500">
-              Dựa trên chủ đề: <span className="font-medium text-slate-700">{title || "—"}</span>
+              Based on topic: <span className="font-medium text-slate-700">{title || "—"}</span>
             </p>
           </div>
         </div>
@@ -111,7 +111,7 @@ export default function Reading() {
           {/* Câu hỏi */}
           <div className="space-y-4">
             <p className="text-sm text-slate-500">
-              Trả lời các câu hỏi dưới đây chỉ dựa vào đoạn văn bên trái.
+              Answer the questions below based only on the passage on the left.
             </p>
 
             {questions.map((q, idx) => {
@@ -200,10 +200,10 @@ export default function Reading() {
               <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-700">
                 <span className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4" />
-                  Đã lưu kết quả Reading của bạn.
+                  Your Reading results have been saved.
                 </span>
                 <span>
-                  {correctCount}/{questions.length} câu đúng
+                  {correctCount}/{questions.length} correct
                 </span>
               </div>
             )}
@@ -212,7 +212,7 @@ export default function Reading() {
               onClick={() => navigate("/exploration")}
               className="flex w-full items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
             >
-              Sang phần Khai thác (Writing/Từ vựng/Speaking)
+              Go to Explore (Writing / Vocab / Speaking)
               <ArrowRight size={18} strokeWidth={2} />
             </button>
           </div>

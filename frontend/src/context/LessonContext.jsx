@@ -109,7 +109,7 @@ export function LessonProvider({ children }) {
     } catch (err) {
       console.error("generateLesson error:", err);
       setStatus("error");
-      setError(err?.response?.data?.error || err.message || "Có lỗi khi tạo bài học");
+      setError(err?.response?.data?.error || err.message || "An error occurred while generating the lesson");
       throw err;
     }
   }, []);
@@ -124,7 +124,7 @@ export function LessonProvider({ children }) {
     } catch (err) {
       console.error("loadLesson error:", err);
       setStatus("error");
-      setError(err?.response?.data?.error || err.message || "Không tải lại được bài học");
+      setError(err?.response?.data?.error || err.message || "Failed to reload the lesson");
       throw err;
     }
   }, []);

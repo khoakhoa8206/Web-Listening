@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, NavLink } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { LessonProvider, useLesson } from "./context/LessonContext";
 import MainDashboard from "./pages/MainDashboard";
 import VideoSelection from "./pages/VideoSelection";
@@ -9,17 +10,18 @@ import AnalyticsReport from "./pages/AnalyticsReport";
 import VocabBank from "./pages/VocabBank";
 import Flashcards from "./pages/Flashcards";
 import LoadingScreen from "./components/LoadingScreen";
+import { pingHealth } from "./services/api";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
 
 const NAV = [
   { to: "/", label: "Dashboard" },
-  { to: "/videos", label: "Chọn bài học" },
-  { to: "/listening", label: "Luyện nghe" },
-  { to: "/reading", label: "Đọc" },
-  { to: "/exploration", label: "Khai thác" },
-  { to: "/vocab", label: "Từ vựng" },
-  { to: "/flashcards", label: "Ôn từ" },
-  { to: "/analytics", label: "Báo cáo" },
+  { to: "/videos", label: "Select Lesson" },
+  { to: "/listening", label: "Listening" },
+  { to: "/reading", label: "Reading" },
+  { to: "/exploration", label: "Explore" },
+  { to: "/vocab", label: "Vocabulary" },
+  { to: "/flashcards", label: "Flashcards" },
+  { to: "/analytics", label: "Analytics" },
 ];
 
 function AppInner() {
@@ -27,7 +29,7 @@ function AppInner() {
 
   return (
     <>
-      {status === "generating" && <LoadingScreen />}
+      {status === "generating" && <LoadingScreen mode="generating" />}
 
       {/* Save toast notification */}
       {saveToast && (
@@ -39,9 +41,9 @@ function AppInner() {
           }`}
         >
           {saveToast === "success" ? (
-            <><CheckCircle2 className="h-4 w-4" /> Đã lưu bài tập thành công!</>
+            <><CheckCircle2 className="h-4 w-4" /> Lesson saved successfully!</>
           ) : (
-            <><AlertTriangle className="h-4 w-4" /> Lưu thất bại, thử lại nhé.</>
+            <><AlertTriangle className="h-4 w-4" /> Save failed, please try again.</>
           )}
         </div>
       )}
@@ -79,12 +81,52 @@ function AppInner() {
   );
 }
 
+// Cold start wrapper — pings /api/health on mount; shows spinner until server responds
+function ColdStartGate({ children }) {
+  const [serverReady, setServerReady] = useState(false);
+  const [checking, setChecking] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function checkServer() {
+      // Try up to ~40 seconds (8 attempts × 5s)
+      for (let i = 0; i < 8; i++) {
+        try {
+          await pingHealth();
+          if (!cancelled) {
+            setServerReady(true);
+            setChecking(false);
+          }
+          return;
+        } catch {
+          // Server not ready yet — wait 5s before retry
+          await new Promise((r) => setTimeout(r, 5000));
+        }
+      }
+      // After 40s give up and show app anyway
+      if (!cancelled) {
+        setServerReady(true);
+        setChecking(false);
+      }
+    }
+    checkServer();
+    return () => { cancelled = true; };
+  }, []);
+
+  if (checking && !serverReady) {
+    return <LoadingScreen mode="coldstart" />;
+  }
+  return children;
+}
+
 export default function App() {
   return (
-    <LessonProvider>
-      <BrowserRouter>
-        <AppInner />
-      </BrowserRouter>
-    </LessonProvider>
+    <ColdStartGate>
+      <LessonProvider>
+        <BrowserRouter>
+          <AppInner />
+        </BrowserRouter>
+      </LessonProvider>
+    </ColdStartGate>
   );
 }

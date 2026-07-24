@@ -15,9 +15,9 @@ import { getProgress, getProgressSummary } from "../services/api";
 import { useLesson } from "../context/LessonContext";
 
 const FILTERS = [
-  { key: "week", label: "Tuần này" },
-  { key: "month", label: "Tháng này" },
-  { key: "all", label: "Tất cả" },
+  { key: "week", label: "This Week" },
+  { key: "month", label: "This Month" },
+  { key: "all", label: "All Time" },
 ];
 
 const DAILY_GOAL = 5; // số bài luyện tập mục tiêu / ngày
@@ -85,7 +85,7 @@ function HistoryRow({ item, onRetake, retaking }) {
           ) : (
             <RotateCcw size={14} strokeWidth={2} />
           )}
-          Làm lại
+          Redo
         </button>
       </div>
     </div>
@@ -112,7 +112,7 @@ export default function MainDashboard() {
       })
       .catch((err) => {
         console.error("Dashboard load error:", err);
-        setError("Không tải được dữ liệu tiến độ. Kiểm tra backend đã chạy ở :8787 chưa.");
+        setError("Failed to load progress data. Make sure the backend is running on :8787.");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -145,7 +145,7 @@ export default function MainDashboard() {
       navigate(target);
     } catch (err) {
       console.error("retake error:", err);
-      setError("Không mở lại được bài học này (có thể bài đã bị xoá).");
+      setError("Could not reopen this lesson (it may have been deleted).");
     } finally {
       setRetakingId(null);
     }
@@ -155,7 +155,7 @@ export default function MainDashboard() {
     return (
       <div className="flex min-h-screen items-center justify-center gap-2 bg-slate-50">
         <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-        <p className="text-sm text-slate-500">Đang tải dữ liệu...</p>
+        <p className="text-sm text-slate-500">Loading data...</p>
       </div>
     );
   }
@@ -166,22 +166,22 @@ export default function MainDashboard() {
         {/* Header */}
         <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">Chào bạn quay lại 👋</h1>
-            <p className="mt-1 text-sm text-slate-500">Cùng xem tiến trình học hôm nay nhé.</p>
+            <h1 className="text-2xl font-bold text-slate-900">Welcome back 👋</h1>
+            <p className="mt-1 text-sm text-slate-500">Let's check today's learning progress.</p>
           </div>
 
           <div className="grid grid-cols-3 gap-3 sm:flex">
-            <StatPill icon={Flame} value={summary?.streakDays ?? 0} label="Ngày liên tục" accent="text-orange-500" />
+            <StatPill icon={Flame} value={summary?.streakDays ?? 0} label="Day Streak" accent="text-orange-500" />
             <StatPill
               icon={BookMarked}
               value={summary?.wordsMastered ?? 0}
-              label="Từ vựng đã lưu"
+              label="Vocab Saved"
               accent="text-pink-500"
             />
             <StatPill
               icon={Headphones}
               value={(summary?.band ?? 0).toFixed(1)}
-              label="Điểm nghe TB"
+              label="Avg. Score"
               accent="text-emerald-600"
             />
           </div>
@@ -197,9 +197,9 @@ export default function MainDashboard() {
         {/* Today's goal */}
         <section className="mb-6 rounded-xl bg-white p-5 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold text-slate-900">Mục tiêu hôm nay</h2>
+            <h2 className="text-base font-semibold text-slate-900">Today's Goal</h2>
             <span className="text-xs font-medium text-slate-400">
-              {Math.min(todayCount, DAILY_GOAL)}/{DAILY_GOAL} bài
+              {Math.min(todayCount, DAILY_GOAL)}/{DAILY_GOAL} lessons
             </span>
           </div>
 
@@ -215,7 +215,7 @@ export default function MainDashboard() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
           >
             <Sparkles size={18} strokeWidth={2} />
-            {todayCount === 0 ? "Chọn video & soạn bài mới" : "Soạn thêm bài luyện tập"}
+            {todayCount === 0 ? "Select video & create new lesson" : "Create another practice lesson"}
           </button>
         </section>
 
@@ -224,7 +224,7 @@ export default function MainDashboard() {
           {/* History list */}
           <div className="rounded-xl bg-white p-5 shadow-sm">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-base font-semibold text-slate-900">Lịch sử luyện tập</h2>
+              <h2 className="text-base font-semibold text-slate-900">Practice History</h2>
             </div>
 
             <div className="mb-4 flex gap-2">
@@ -255,7 +255,7 @@ export default function MainDashboard() {
                 ))
               ) : (
                 <p className="py-6 text-center text-sm text-slate-400">
-                  Chưa có bài nào trong khoảng thời gian này. Hãy soạn bài học đầu tiên!
+                  No lessons in this period yet. Create your first lesson!
                 </p>
               )}
             </div>
@@ -266,11 +266,11 @@ export default function MainDashboard() {
             <div className="rounded-xl bg-white p-5 shadow-sm">
               <div className="mb-3 flex items-center gap-2 text-slate-500">
                 <TrendingUp size={16} strokeWidth={2} />
-                <span className="text-xs font-medium">Điểm trung bình</span>
+                <span className="text-xs font-medium">Avg. Score</span>
               </div>
               <div className="text-3xl font-bold text-slate-900">{avgScore.toFixed(1)}</div>
               <div className="mt-1 text-xs text-slate-400">
-                {filteredHistory.length} bài · {FILTERS.find((f) => f.key === filter)?.label.toLowerCase()}
+                {filteredHistory.length} lesson(s) · {FILTERS.find((f) => f.key === filter)?.label.toLowerCase()}
               </div>
             </div>
 
@@ -278,7 +278,7 @@ export default function MainDashboard() {
               onClick={() => navigate("/analytics")}
               className="flex items-center justify-between rounded-xl bg-white p-5 text-left shadow-sm transition-colors hover:bg-slate-50"
             >
-              <span className="text-sm font-medium text-slate-900">Xem toàn bộ thống kê</span>
+              <span className="text-sm font-medium text-slate-900">View full analytics</span>
               <ChevronRight size={18} className="text-slate-400" strokeWidth={2} />
             </button>
           </div>

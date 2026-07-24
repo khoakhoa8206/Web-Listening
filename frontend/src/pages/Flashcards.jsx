@@ -31,7 +31,7 @@ export default function Flashcards() {
       .then(setCards)
       .catch((err) => {
         console.error("getDueVocab error:", err);
-        setError("Không tải được danh sách từ cần ôn. Kiểm tra backend đã chạy chưa.");
+        setError("Failed to load review cards. Make sure the backend is running.");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -62,9 +62,9 @@ export default function Flashcards() {
             <Layers className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-900">Ôn từ vựng</h1>
+            <h1 className="text-xl font-bold text-slate-900">Vocabulary Review</h1>
             <p className="text-sm text-slate-500">
-              {loading ? "Đang tải..." : total > 0 ? `${doneCount}/${total} từ đến hạn ôn hôm nay` : "Không có từ nào đến hạn"}
+              {loading ? "Loading..." : total > 0 ? `${doneCount}/${total} cards due today` : "No cards due"}
             </p>
           </div>
         </div>
@@ -79,34 +79,34 @@ export default function Flashcards() {
         {loading ? (
           <div className="flex items-center justify-center gap-2 rounded-xl bg-white p-10 shadow-sm">
             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-            <p className="text-sm text-slate-500">Đang tải thẻ ôn tập...</p>
+            <p className="text-sm text-slate-500">Loading flashcards...</p>
           </div>
         ) : total === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-xl bg-white p-10 text-center shadow-sm">
             <PartyPopper className="h-8 w-8 text-emerald-500" />
             <p className="text-sm font-medium text-slate-700">
-              Không còn từ nào đến hạn ôn hôm nay. Quay lại sau nhé!
+              No cards due today. Come back later!
             </p>
             <button
               onClick={() => navigate("/vocab")}
               className="flex items-center gap-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
             >
               <BookMarked size={16} strokeWidth={2} />
-              Xem kho từ vựng
+              View Vocabulary Bank
             </button>
           </div>
         ) : !current ? (
           <div className="flex flex-col items-center gap-3 rounded-xl bg-white p-10 text-center shadow-sm">
             <PartyPopper className="h-8 w-8 text-emerald-500" />
             <p className="text-sm font-medium text-slate-700">
-              Xong hết {total} từ đến hạn hôm nay! Làm tốt lắm.
+              All {total} cards done for today! Great work.
             </p>
             <button
               onClick={() => navigate("/vocab")}
               className="flex items-center gap-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
             >
               <BookMarked size={16} strokeWidth={2} />
-              Xem kho từ vựng
+              View Vocabulary Bank
             </button>
           </div>
         ) : (
@@ -133,7 +133,7 @@ export default function Flashcards() {
                   {current.phonetic && <p className="text-sm text-slate-400">{current.phonetic}</p>}
                   <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-400">
                     <RotateCw className="h-3.5 w-3.5" />
-                    Bấm để xem nghĩa
+                    Tap to reveal
                   </p>
                 </>
               ) : (
@@ -158,7 +158,7 @@ export default function Flashcards() {
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-50 px-4 py-3 text-sm font-semibold text-red-600 hover:bg-red-100 disabled:opacity-50"
                 >
                   <ThumbsDown size={16} strokeWidth={2} />
-                  Chưa nhớ
+                  Still learning
                 </button>
                 <button
                   onClick={() => handleAnswer(true)}
@@ -166,7 +166,7 @@ export default function Flashcards() {
                   className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
                 >
                   <ThumbsUp size={16} strokeWidth={2} />
-                  Đã nhớ
+                  Got it
                 </button>
               </div>
             )}

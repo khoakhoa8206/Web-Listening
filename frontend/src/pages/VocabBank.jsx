@@ -68,7 +68,7 @@ export default function VocabBank() {
       .then(setVocab)
       .catch((err) => {
         console.error("getSavedVocab error:", err);
-        setError("Không tải được kho từ vựng. Kiểm tra backend đã chạy ở :8787 chưa.");
+        setError("Failed to load vocabulary bank. Make sure the backend is running on :8787.");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -104,9 +104,9 @@ export default function VocabBank() {
               <BookMarked className="h-5 w-5 text-white" strokeWidth={2} />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-slate-900">Kho từ vựng của bạn</h1>
+              <h1 className="text-xl font-bold text-slate-900">Your Vocabulary Bank</h1>
               <p className="text-sm text-slate-500">
-                {loading ? "Đang tải..." : `${vocab.length} từ đã lưu từ các bài học`}
+                {loading ? "Loading..." : `${vocab.length} word(s) saved from lessons`}
               </p>
             </div>
           </div>
@@ -118,21 +118,21 @@ export default function VocabBank() {
                 className="flex items-center gap-1.5 rounded-lg bg-pink-400 px-3 py-2 text-xs font-semibold text-white hover:bg-pink-500"
               >
                 <Layers size={14} strokeWidth={2} />
-                Ôn từ (Flashcard)
+                Flashcard Review
               </button>
               <button
                 onClick={() => exportVocabCsv(vocab)}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
               >
                 <Download size={14} strokeWidth={2} />
-                Xuất CSV
+                Export CSV
               </button>
               <button
                 onClick={() => exportVocabAnki(vocab)}
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50"
               >
                 <Download size={14} strokeWidth={2} />
-                Xuất Anki
+                Export Anki
               </button>
             </div>
           )}
@@ -144,7 +144,7 @@ export default function VocabBank() {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Tìm theo từ hoặc nghĩa..."
+            placeholder="Search by word or meaning..."
             className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
           />
         </div>
@@ -159,25 +159,24 @@ export default function VocabBank() {
         {loading ? (
           <div className="flex items-center justify-center gap-2 rounded-xl bg-white p-10 shadow-sm">
             <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
-            <p className="text-sm text-slate-500">Đang tải kho từ vựng...</p>
+            <p className="text-sm text-slate-500">Loading vocabulary bank...</p>
           </div>
         ) : vocab.length === 0 ? (
           <div className="flex flex-col items-center gap-3 rounded-xl bg-white p-10 text-center shadow-sm">
             <p className="text-sm text-slate-500">
-              Bạn chưa lưu từ vựng nào. Vào tab "Từ vựng" trong 1 bài học và bấm "Lưu vào kho từ
-              vựng" để thêm.
+              You haven't saved any vocabulary yet. Open a lesson, go to the Summary tab, and click "Save to Vocabulary Bank".
             </p>
             <button
               onClick={() => navigate("/videos")}
               className="flex items-center gap-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
             >
               <Sparkles size={16} strokeWidth={2} />
-              Bắt đầu 1 bài học
+              Start a Lesson
             </button>
           </div>
         ) : filtered.length === 0 ? (
           <p className="rounded-xl bg-white p-8 text-center text-sm text-slate-400 shadow-sm">
-            Không tìm thấy từ nào khớp với "{query}".
+            No words found matching "{query}".
           </p>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -224,7 +223,7 @@ export default function VocabBank() {
                 {v.tip && (
                   <div className="rounded-r-lg border-l-4 border-pink-400 bg-pink-50 p-3">
                     <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-pink-600">
-                      Gợi ý Speaking
+                      Speaking Tip
                     </p>
                     <p className="text-sm text-slate-700">{v.tip}</p>
                   </div>

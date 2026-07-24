@@ -19,7 +19,7 @@ import {
 import { checkTranscript, getTranscriptLink, searchVideos } from "../services/api";
 import { useLesson } from "../context/LessonContext";
 
-const TOPICS = ["Tất cả", "Giáo dục", "Môi trường", "Công nghệ", "Y tế"];
+const TOPICS = ["All", "Education", "Environment", "Technology", "Healthcare"];
 const BANDS = [
   { value: "6.0", label: "Band 6.0" },
   { value: "7.0", label: "Band 7.0" },
@@ -27,9 +27,9 @@ const BANDS = [
 ];
 // Phần 6.2 — Số lượng câu hỏi (blank) trong dictation, độc lập với Band (Band = độ khó, cái này = số lượng)
 const QUESTION_COUNTS = [
-  { value: "it", label: "Ít (~15-20 câu)" },
-  { value: "vua", label: "Vừa (~25-35 câu)" },
-  { value: "nhieu", label: "Nhiều (~40-50 câu)" },
+  { value: "it", label: "Few (~15-20 blanks)" },
+  { value: "vua", label: "Medium (~25-35 blanks)" },
+  { value: "nhieu", label: "Many (~40-50 blanks)" },
 ];
 
 // Phần 6.1 — Trang lấy transcript thay thế, dùng khi server không tự lấy được transcript (bị chặn IP)
@@ -55,7 +55,7 @@ export default function VideoSelection() {
   const [cooldownSec, setCooldownSec] = useState(0); // Phần 5.6 — đếm ngược cooldown chống spam tạo bài
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTopic, setActiveTopic] = useState("Tất cả");
+  const [activeTopic, setActiveTopic] = useState("All");
   const [videos, setVideos] = useState([]);
   const [videosLoading, setVideosLoading] = useState(false);
   const [videosError, setVideosError] = useState(null);
@@ -107,14 +107,14 @@ export default function VideoSelection() {
     setVideosError(null);
     const timer = setTimeout(async () => {
       try {
-        const topicParam = activeTopic === "Tất cả" ? "" : activeTopic;
+        const topicParam = activeTopic === "All" ? "" : activeTopic;
         const results = await searchVideos(searchQuery, topicParam);
         setVideos(results || []);
       } catch (err) {
         console.error("searchVideos error:", err);
         setVideosError(
           err?.response?.data?.error ||
-            "Không tìm được video. Kiểm tra backend đã cấu hình YOUTUBE_API_KEY chưa."
+            "No videos found. Check that the backend has YOUTUBE_API_KEY configured."
         );
         setVideos([]);
       } finally {
@@ -145,7 +145,7 @@ export default function VideoSelection() {
     lessonStatus !== "generating" &&
     cooldownSec === 0;
 
-  // Bấm "AI Tự Động Soạn Bài" cho link tự nhập — dùng transcript đã dán tay (hoặc tự điền sẵn nếu may mắn)
+  // Bấm "Auto-Generate Lesson with AI" cho link tự nhập — dùng transcript đã dán tay (hoặc tự điền sẵn nếu may mắn)
   const handleGenerateFromLink = async () => {
     if (!canGenerateFromLink) return;
     try {
@@ -179,7 +179,7 @@ export default function VideoSelection() {
     setModalError(null);
   };
 
-  // Bấm "Tạo bài học" trong modal
+  // Bấm "Create Lesson" trong modal
   const handleModalGenerate = async () => {
     if (!modalVideo || !modalTranscript.trim() || cooldownSec > 0) return;
     setModalError(null);
@@ -187,7 +187,7 @@ export default function VideoSelection() {
       await generateLesson(
         modalVideo.url,
         modalTranscript,
-        activeTopic === "Tất cả" ? "" : activeTopic,
+        activeTopic === "All" ? "" : activeTopic,
         band,
         questionCount
       );
@@ -195,25 +195,25 @@ export default function VideoSelection() {
     } catch (err) {
       console.error(err);
       handleCooldownError(err);
-      setModalError(err?.response?.data?.error || err.message || "Có lỗi khi tạo bài học");
+      setModalError(err?.response?.data?.error || err.message || "An error occurred while creating the lesson");
     }
   };
 
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-5xl">
-        <h1 className="mb-1 text-xl font-bold text-slate-900">Chọn bài học</h1>
+        <h1 className="mb-1 text-xl font-bold text-slate-900">Select a Lesson</h1>
         <p className="mb-6 text-sm text-slate-500">
-          Tự nhập link bài học mới hoặc tìm video thật trên YouTube có sẵn phụ đề.
+          Enter a new lesson link or search for real YouTube videos with captions.
         </p>
 
         {/* ================= Khu vực 1: Tự nhập bài học bằng Link ================= */}
         <div className="mb-8 rounded-xl bg-white p-5 shadow-sm">
-          <p className="mb-3 text-sm font-semibold text-slate-900">Tự nhập bài học bằng Link</p>
+          <p className="mb-3 text-sm font-semibold text-slate-900">Add Lesson by Link</p>
 
           {/* Phần 5.2 — Chọn band điểm mục tiêu, AI điều chỉnh độ khó từ vựng/câu hỏi/reading */}
           <div className="mb-2 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-500">Band mục tiêu:</span>
+            <span className="text-xs font-medium text-slate-500">Target Band:</span>
             {BANDS.map((b) => (
               <button
                 key={b.value}
@@ -231,7 +231,7 @@ export default function VideoSelection() {
 
           {/* Phần 6.2 — Chọn số lượng câu hỏi (blank), độc lập với độ khó */}
           <div className="mb-3 flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-slate-500">Số lượng câu hỏi:</span>
+            <span className="text-xs font-medium text-slate-500">Question Count:</span>
             {QUESTION_COUNTS.map((q) => (
               <button
                 key={q.value}
@@ -253,7 +253,7 @@ export default function VideoSelection() {
               type="text"
               value={link}
               onChange={(e) => setLink(e.target.value)}
-              placeholder="Dán link YouTube vào đây..."
+              placeholder="Paste YouTube link here..."
               className="w-full rounded-lg border border-slate-200 py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
             />
           </div>
@@ -262,14 +262,14 @@ export default function VideoSelection() {
           {checkStatus === "checking" && (
             <div className="mb-3 flex w-fit items-center gap-1.5 rounded-lg bg-slate-50 px-3 py-2 text-xs font-medium text-slate-500">
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              Đang kiểm tra video...
+              Checking video...
             </div>
           )}
 
           {checkStatus === "valid" && (
             <div className="mb-3 flex w-fit items-center gap-1.5 rounded-lg bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Đã tự lấy được transcript — có thể tạo bài ngay, hoặc sửa lại transcript bên dưới.
+              Transcript fetched automatically — you can generate now, or edit the transcript below.
             </div>
           )}
 
@@ -281,13 +281,13 @@ export default function VideoSelection() {
                   className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
                 >
                   <ExternalLink className="h-3.5 w-3.5" />
-                  Mở trang lấy transcript (youtubetotranscript.com)
+                  Open transcript page (youtubetotranscript.com)
                 </button>
               )}
               <textarea
                 value={transcriptDraft}
                 onChange={(e) => setTranscriptDraft(e.target.value)}
-                placeholder="Dán transcript đã copy từ trang trên vào đây..."
+                placeholder="Paste the transcript copied from the page above..."
                 rows={4}
                 className="w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
               />
@@ -306,14 +306,14 @@ export default function VideoSelection() {
             {lessonStatus === "generating" ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Đang soạn bài... (có thể mất 5-15 giây)
+                Generating lesson... (may take 5–15 seconds)
               </>
             ) : cooldownSec > 0 ? (
-              <>Đợi {cooldownSec}s để tránh spam</>
+              <>Wait {cooldownSec}s before generating again</>
             ) : (
               <>
                 <Sparkles className="h-4 w-4" strokeWidth={2} />
-                AI Tự Động Soạn Bài
+                Auto-Generate Lesson with AI
               </>
             )}
           </button>
@@ -321,27 +321,27 @@ export default function VideoSelection() {
           {lessonStatus === "error" && lessonError && (
             <div className="mt-3 flex w-fit items-center gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
               <AlertTriangle className="h-3.5 w-3.5" />
-              Lỗi khi tạo bài: {lessonError}
+              Error generating lesson: {lessonError}
             </div>
           )}
 
           {/* Save buttons — chỉ hiện khi đã có bài sẵn sàng */}
           {lessonStatus === "ready" && (
             <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-pink-50 pt-4">
-              <span className="text-xs font-medium text-slate-400">Lưu bài tập:</span>
+              <span className="text-xs font-medium text-slate-400">Save lesson:</span>
               <button
                 onClick={saveLessonToLocalStorage}
                 className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
               >
                 <Save className="h-3.5 w-3.5" />
-                Lưu tạm (trình duyệt)
+                Save locally (browser)
               </button>
               <button
                 onClick={exportLessonAsJSON}
                 className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
               >
                 <Download className="h-3.5 w-3.5" />
-                Tải xuống JSON
+                Download JSON
               </button>
             </div>
           )}
@@ -350,12 +350,12 @@ export default function VideoSelection() {
           {lessonStatus !== "ready" && hasSavedLesson() && (
             <div className="mt-4 flex items-center gap-2 rounded-lg bg-pink-50 border border-pink-100 px-3 py-2">
               <RotateCcw className="h-3.5 w-3.5 shrink-0 text-pink-400" />
-              <span className="text-xs text-slate-600">Có bài tập đã lưu.</span>
+              <span className="text-xs text-slate-600">You have a saved lesson.</span>
               <button
                 onClick={() => { loadLessonFromLocalStorage(); navigate("/listening"); }}
                 className="ml-auto text-xs font-semibold text-pink-500 hover:underline"
               >
-                Tải lại →
+                Restore →
               </button>
             </div>
           )}
@@ -369,7 +369,7 @@ export default function VideoSelection() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Tìm video theo từ khóa (VD: renewable energy)..."
+              placeholder="Search videos by keyword (e.g. renewable energy)..."
               className="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-9 pr-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
             />
           </div>
@@ -395,7 +395,7 @@ export default function VideoSelection() {
 
           <p className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
             <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-            Video được tìm trực tiếp trên YouTube, ưu tiên video có phụ đề.
+            Videos are searched directly on YouTube, prioritising those with captions.
           </p>
         </div>
 
@@ -403,7 +403,7 @@ export default function VideoSelection() {
         {cooldownSec > 0 && (
           <div className="mb-4 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-            Vui lòng đợi {cooldownSec}s trước khi tạo bài học tiếp theo.
+            Please wait {cooldownSec}s before creating the next lesson.
           </div>
         )}
 
@@ -417,12 +417,12 @@ export default function VideoSelection() {
         {videosLoading ? (
           <div className="flex items-center justify-center gap-2 rounded-xl bg-white p-10 text-center shadow-sm">
             <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
-            <p className="text-sm text-slate-500">Đang tìm video trên YouTube...</p>
+            <p className="text-sm text-slate-500">Searching YouTube for videos...</p>
           </div>
         ) : videos.length === 0 ? (
           <div className="rounded-xl bg-white p-10 text-center shadow-sm">
             <p className="text-sm text-slate-500">
-              Không tìm thấy video phù hợp. Hãy thử từ khóa hoặc chủ đề khác.
+              No matching videos found. Try a different keyword or topic.
             </p>
           </div>
         ) : (
@@ -497,7 +497,7 @@ export default function VideoSelection() {
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 <Play className="h-3.5 w-3.5" />
-                Xem trên YouTube
+                Watch on YouTube
               </a>
               <a
                 href={buildTranscriptSiteUrl(modalVideo.id)}
@@ -506,21 +506,21 @@ export default function VideoSelection() {
                 className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
               >
                 <ExternalLink className="h-3.5 w-3.5" />
-                Lấy transcript ↗
+                Get transcript ↗
               </a>
             </div>
 
             {modalChecking && (
               <div className="mb-3 flex items-center gap-1.5 text-xs font-medium text-slate-500">
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                Đang thử tự động lấy transcript...
+                Trying to fetch transcript automatically...
               </div>
             )}
 
             <textarea
               value={modalTranscript}
               onChange={(e) => setModalTranscript(e.target.value)}
-              placeholder="Dán transcript đã copy từ trang trên vào đây..."
+              placeholder="Paste the transcript copied from the page above..."
               rows={6}
               className="mb-3 w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-pink-400 focus:outline-none focus:ring-1 focus:ring-pink-300"
             />
@@ -544,14 +544,14 @@ export default function VideoSelection() {
               {lessonStatus === "generating" ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Đang soạn bài...
+                  Generating lesson...
                 </>
               ) : cooldownSec > 0 ? (
-                <>Đợi {cooldownSec}s để tránh spam</>
+                <>Wait {cooldownSec}s before generating again</>
               ) : (
                 <>
                   <Sparkles className="h-4 w-4" strokeWidth={2} />
-                  Tạo bài học
+                  Create Lesson
                 </>
               )}
             </button>

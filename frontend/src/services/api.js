@@ -89,3 +89,7 @@ export const gradeSpeaking = (promptText, transcript, part) =>
   api.post("/speaking/grade", { promptText, transcript, part }).then((r) => r.data);
 
 export default api;
+
+// Cold start ping — kiểm tra xem server có sẵn sàng chưa
+export const pingHealth = () =>
+  api.get("/health", { timeout: 5000 }).then((r) => r.data);

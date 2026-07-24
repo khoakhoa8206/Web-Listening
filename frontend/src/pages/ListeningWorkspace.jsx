@@ -60,7 +60,7 @@ const Blank = React.forwardRef(function Blank(
   if (isIncorrect) stateClasses = `${isIdea ? "border-dashed" : ""} border-red-500 bg-red-50 text-red-600`;
 
   return (
-    <span className="inline-flex items-center gap-1.5 align-middle mx-1" title={isIdea ? "Ý quan trọng của bài" : "Từ vựng"}>
+    <span className="inline-flex items-center gap-1.5 align-middle mx-1" title={isIdea ? "Key idea of the passage" : "Vocabulary"}>
       <input
         ref={ref}
         id={id}
@@ -257,21 +257,21 @@ export default function ListeningWorkspace() {
           {status === "generating" ? (
             <>
               <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
-              <p className="text-sm font-medium text-slate-700">AI đang soạn bài dictation...</p>
+              <p className="text-sm font-medium text-slate-700">AI is preparing your dictation...</p>
             </>
           ) : status === "error" ? (
             <>
               <AlertTriangle className="h-8 w-8 text-red-500" />
-              <p className="text-sm font-medium text-slate-700">Tạo bài học thất bại.</p>
+              <p className="text-sm font-medium text-slate-700">Lesson generation failed.</p>
             </>
           ) : (
-            <p className="text-sm text-slate-500">Bạn chưa chọn bài học nào.</p>
+            <p className="text-sm text-slate-500">No lesson selected.</p>
           )}
           <button
             onClick={() => navigate("/videos")}
             className="mt-2 rounded-lg bg-pink-400 px-4 py-2 text-sm font-semibold text-white hover:bg-pink-500"
           >
-            Chọn bài học
+            Select Lesson
           </button>
         </div>
       </div>
@@ -287,13 +287,13 @@ export default function ListeningWorkspace() {
             <ListChecks className="h-6 w-6" strokeWidth={2} />
           </div>
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Bài nghe đã sẵn sàng</h2>
+            <h2 className="text-base font-semibold text-slate-900">Lesson Ready</h2>
             <p className="mt-1 text-sm text-slate-500">{title || videoUrl}</p>
           </div>
           <p className="text-sm text-slate-500">
-            Bài gồm <span className="font-semibold text-slate-700">{dictation.length} đoạn</span>{" "}
-            với <span className="font-semibold text-slate-700">{BLANK_ORDER.length} chỗ trống</span>.
-            Thời gian làm bài sẽ được tính từ lúc bạn bấm bắt đầu.
+            This lesson has <span className="font-semibold text-slate-700">{dictation.length} segments</span>{" "}
+            with <span className="font-semibold text-slate-700">{BLANK_ORDER.length} blanks</span>.
+            Your time will start when you press Begin.
           </p>
 
           {/* Nút lưu bài tập */}
@@ -303,14 +303,14 @@ export default function ListeningWorkspace() {
               className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
             >
               <Save className="h-3.5 w-3.5" />
-              Lưu tạm
+              Save locally
             </button>
             <button
               onClick={exportLessonAsJSON}
               className="flex items-center gap-1.5 rounded-lg border border-pink-200 bg-pink-50 px-3 py-1.5 text-xs font-medium text-pink-600 hover:bg-pink-100 transition-colors"
             >
               <Download className="h-3.5 w-3.5" />
-              Tải xuống JSON
+              Download JSON
             </button>
           </div>
           <button
@@ -318,7 +318,7 @@ export default function ListeningWorkspace() {
             className="flex w-full items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
           >
             <PlayCircle size={18} strokeWidth={2} />
-            Bắt đầu làm bài
+            Begin Exercise
           </button>
         </div>
       </div>
@@ -333,7 +333,7 @@ export default function ListeningWorkspace() {
           <div className="rounded-xl bg-white p-4 shadow-sm">
             <div className="mb-3 flex items-center gap-2 text-slate-500">
               <Volume2 size={16} strokeWidth={2} />
-              <span className="text-xs font-medium">Bài nghe</span>
+              <span className="text-xs font-medium">Listening</span>
             </div>
 
             <div className="aspect-video w-full overflow-hidden rounded-lg bg-slate-900">
@@ -347,7 +347,7 @@ export default function ListeningWorkspace() {
                 className="flex items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Repeat size={16} strokeWidth={2} />
-                Lặp lại câu này
+                Repeat this sentence
               </button>
 
               <div className="grid grid-cols-2 gap-2">
@@ -359,7 +359,7 @@ export default function ListeningWorkspace() {
                   }`}
                 >
                   <Rewind size={14} strokeWidth={2} />
-                  Giảm tốc độ (0.75x)
+                  Slow speed (0.75x)
                 </button>
                 <button
                   onClick={() => handleSetSpeed(1)}
@@ -369,7 +369,7 @@ export default function ListeningWorkspace() {
                   }`}
                 >
                   <Gauge size={14} strokeWidth={2} />
-                  Tốc độ chuẩn (1x)
+                  Normal speed (1x)
                 </button>
               </div>
             </div>
@@ -377,7 +377,7 @@ export default function ListeningWorkspace() {
 
           <div className="mt-4 rounded-xl bg-white p-4 shadow-sm">
             <div className="mb-2 flex items-center justify-between text-xs">
-              <span className="font-medium text-slate-500">Tiến độ điền từ</span>
+              <span className="font-medium text-slate-500">Fill progress</span>
               <span className="font-semibold text-slate-900">
                 {Object.values(answers).filter((v) => (v || "").trim()).length}/{totalCount}
               </span>
@@ -401,23 +401,23 @@ export default function ListeningWorkspace() {
         <section className="flex flex-col gap-4">
           <div className="rounded-xl bg-white p-6 shadow-sm">
             <h2 className="mb-1 text-base font-semibold text-slate-900">
-              Điền từ còn thiếu (Dictation)
+              Fill in the Blanks (Dictation)
             </h2>
             <p className="mb-6 text-sm text-slate-500">
-              Nghe kỹ và điền từ bạn nghe được vào chỗ trống. Nhấn{" "}
+              Listen carefully and fill in the blanks. Press{" "}
               <kbd className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-semibold">Enter</kbd>{" "}
-              để chuyển sang ô tiếp theo.
+              to move to the next blank.
             </p>
 
             {/* Phần 6.3 — Chú thích 2 loại blank: viền liền = từ vựng, viền chấm = ý quan trọng */}
             <div className="mb-6 flex flex-wrap items-center gap-4 text-xs text-slate-500">
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-4 w-8 rounded border-2 border-slate-300 bg-white" />
-                Từ vựng
+                Vocabulary
               </span>
               <span className="flex items-center gap-1.5">
                 <span className="inline-block h-4 w-8 rounded border-2 border-dashed border-slate-300 bg-white" />
-                Ý quan trọng (tái dùng được cho topic tương tự)
+                Key idea (reusable for similar topics)
               </span>
             </div>
 
@@ -454,9 +454,9 @@ export default function ListeningWorkspace() {
 
             {isChecked && (
               <div className="mt-6 flex items-center justify-between rounded-lg bg-slate-50 px-4 py-3">
-                <span className="text-sm font-medium text-slate-600">Kết quả</span>
+                <span className="text-sm font-medium text-slate-600">Results</span>
                 <span className="text-sm font-bold text-slate-900">
-                  {correctCount}/{totalCount} câu đúng
+                  {correctCount}/{totalCount} correct
                 </span>
               </div>
             )}
@@ -469,7 +469,7 @@ export default function ListeningWorkspace() {
               className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
             >
               <ClipboardCheck size={18} strokeWidth={2} />
-              Kiểm tra đáp án
+              Check Answers
             </button>
 
             {isChecked ? (
@@ -477,7 +477,7 @@ export default function ListeningWorkspace() {
                 onClick={() => navigate("/reading")}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
               >
-                Luyện Reading tiếp
+                Continue to Reading
                 <ArrowRight size={18} strokeWidth={2} />
               </button>
             ) : (
@@ -485,7 +485,7 @@ export default function ListeningWorkspace() {
                 onClick={() => navigate("/exploration")}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-pink-400 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-pink-500"
               >
-                Chuyển sang phần Luyện Ý Tưởng & Từ Vựng
+                Go to IELTS Exploration
                 <ArrowRight size={18} strokeWidth={2} />
               </button>
             )}
