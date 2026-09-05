@@ -3,9 +3,11 @@ import { generateLesson as apiGenerateLesson, getLesson as apiGetLesson } from "
 
 const LessonContext = createContext(null);
 
-const STORAGE_KEY = "listening_ielts_lesson";
+const STORAGE_PREFIX = "listening_ielts_lesson";
 
-export function LessonProvider({ children }) {
+export function LessonProvider({ children, currentUser = "default" }) {
+  // Mỗi user có localStorage key riêng để data bài học không bị lẫn nhau.
+  const STORAGE_KEY = `${STORAGE_PREFIX}_${currentUser || "default"}`;
   const [lessonId, setLessonId] = useState(null);
   const [videoUrl, setVideoUrl] = useState(null);
   const [title, setTitle] = useState(null);
@@ -136,13 +138,29 @@ export function LessonProvider({ children }) {
     setReadingPassage(null); setStatus("idle"); setError(null);
   }, []);
 
+  // Reset toàn bộ state bài học — dùng khi người dùng muốn thoát và chọn bài mới.
+  const resetLesson = useCallback(() => {
+    setLessonId(null);
+    setVideoUrl(null);
+    setTitle(null);
+    setDictation(null);
+    setWritingQuestions(null);
+    setVocabCards(null);
+    setIdeaBank(null);
+    setTrueFalseQuestions(null);
+    setSpeakingPrompt(null);
+    setReadingPassage(null);
+    setStatus("idle");
+    setError(null);
+  }, []);
+
   return (
     <LessonContext.Provider
       value={{
         lessonId, videoUrl, title, dictation, writingQuestions, vocabCards,
         ideaBank, trueFalseQuestions, speakingPrompt, readingPassage,
         status, error, saveToast,
-        generateLesson, loadLesson, reset,
+        generateLesson, loadLesson, reset, resetLesson,
         exportLessonAsJSON, saveLessonToLocalStorage,
         loadLessonFromLocalStorage, hasSavedLesson,
       }}

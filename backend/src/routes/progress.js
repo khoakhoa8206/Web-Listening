@@ -2,6 +2,12 @@ import { Router } from "express";
 import pool from "../db.js";
 const router = Router();
 
+// Lấy username từ header x-username (frontend tự gắn sau khi login).
+// Mặc định Hoagttho1411 để tương thích data cũ chưa có username.
+function getUsername(req) {
+  return req.headers["x-username"] || "Hoagttho1411";
+}
+
 // POST /api/progress/save { lessonId, type, score, minutes }
 // type: "Listening" | "Writing" | "Reading" | "Vocabulary" | "Speaking"
 router.post("/save", async (req, res) => {
@@ -10,9 +16,10 @@ router.post("/save", async (req, res) => {
     return res.status(400).json({ error: "Thiếu lessonId." });
   }
   try {
+    const username = getUsername(req);
     await pool.query(
-      "INSERT INTO progress (lesson_id, type, score, minutes) VALUES ($1,$2,$3,$4)",
-      [lessonId, type || "Listening", score ?? null, minutes ?? 0]
+      "INSERT INTO progress (lesson_id, type, score, minutes, username) VALUES ($1,$2,$3,$4,$5)",
+      [lessonId, type || "Listening", score ?? null, minutes ?? 0, username]
     );
     res.json({ ok: true });
   } catch (err) {
@@ -24,12 +31,15 @@ router.post("/save", async (req, res) => {
 // GET /api/progress -> lịch sử làm bài thật, kèm tiêu đề video (join lessons)
 router.get("/", async (req, res) => {
   try {
+    const username = getUsername(req);
     const { rows } = await pool.query(
       `SELECT p.id, p.lesson_id AS "lessonId", p.type, p.score, p.minutes, p.date,
               l.title, l.video_url AS "videoUrl", l.topic
        FROM progress p
        LEFT JOIN lessons l ON l.id = p.lesson_id
-       ORDER BY p.date DESC`
+       WHERE p.username = $1
+       ORDER BY p.date DESC`,
+      [username]
     );
     res.json(rows);
   } catch (err) {
@@ -45,12 +55,13 @@ router.get("/summary", async (req, res) => {
   const days = range === "week" ? 7 : range === "month" ? 30 : 36500;
 
   try {
+    const username = getUsername(req);
     const { rows } = await pool.query(
       `SELECT p.*, l.title, l.video_url AS "videoUrl"
        FROM progress p LEFT JOIN lessons l ON l.id = p.lesson_id
-       WHERE p.date >= NOW() - make_interval(days => $1::int)
+       WHERE p.username = $1 AND p.date >= NOW() - make_interval(days => $2::int)
        ORDER BY p.date ASC`,
-      [days]
+      [username, days]
     );
 
     const listeningRows = rows.filter((r) => r.type === "Listening" && r.score != null);
@@ -60,12 +71,16 @@ router.get("/summary", async (req, res) => {
         : 0;
 
     const totalMinutes = rows.reduce((s, r) => s + Number(r.minutes || 0), 0);
-    const { rows: vocabCountRows } = await pool.query("SELECT COUNT(*) AS c FROM saved_vocab");
+    const { rows: vocabCountRows } = await pool.query(
+      "SELECT COUNT(*) AS c FROM saved_vocab WHERE username = $1",
+      [username]
+    );
     const vocabCount = Number(vocabCountRows[0].c);
 
     // Chuỗi ngày liên tục có ít nhất 1 lượt luyện tập (tính đến hôm nay)
     const { rows: dateRows } = await pool.query(
-      `SELECT DISTINCT date(date) AS d FROM progress ORDER BY d DESC`
+      `SELECT DISTINCT date(date) AS d FROM progress WHERE username = $1 ORDER BY d DESC`,
+      [username]
     );
     const allDates = dateRows.map((r) => r.d.toISOString().slice(0, 10));
     let streakDays = 0;

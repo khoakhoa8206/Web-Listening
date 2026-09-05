@@ -15,6 +15,11 @@ const PIN_STORAGE_KEY = "ielts_app_pin";
 api.interceptors.request.use((config) => {
   const pin = localStorage.getItem(PIN_STORAGE_KEY);
   if (pin) config.headers["x-app-pin"] = pin;
+
+  // Yêu cầu 5 — Gắn username vào mọi request để backend biết data của ai
+  const user = localStorage.getItem("app_current_user");
+  if (user) config.headers["x-username"] = user;
+
   return config;
 });
 

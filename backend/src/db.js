@@ -85,6 +85,12 @@ export async function initDb() {
   // Phần 5.2 — Band điểm mục tiêu chọn khi tạo bài (6.0 / 7.0 / 8.0+), lưu lại để tham khảo sau.
   await ensureColumn("lessons", "band_target", "TEXT");
 
+  // Yêu cầu 5 — Phân tách data theo username (Hoagttho1411 / Lytran202).
+  // DEFAULT gán toàn bộ data cũ cho Hoagttho1411 (chủ tài khoản gốc).
+  await ensureColumn("progress", "username", "TEXT DEFAULT 'Hoagttho1411'");
+  await ensureColumn("saved_vocab", "username", "TEXT DEFAULT 'Hoagttho1411'");
+  await ensureColumn("lessons", "username", "TEXT DEFAULT 'Hoagttho1411'");
+
   console.log("✅ Đã kết nối Postgres và kiểm tra schema.");
 }
 

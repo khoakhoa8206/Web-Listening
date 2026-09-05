@@ -26,7 +26,7 @@ function sleep(ms) {
 }
 
 // Gọi ai.models.generateContent với retry+fallback dùng chung cho mọi nơi cần gọi Gemini.
-async function generateContentWithRetry(params) {
+export async function generateContentWithRetry(params) {
   let lastErr;
   for (let i = 0; i < RETRY_DELAYS_MS.length; i++) {
     try {

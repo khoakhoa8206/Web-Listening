@@ -9,6 +9,8 @@ import IELTSExploration from "./pages/IELTSExploration";
 import AnalyticsReport from "./pages/AnalyticsReport";
 import VocabBank from "./pages/VocabBank";
 import Flashcards from "./pages/Flashcards";
+import NewsReader from "./pages/NewsReader";
+import Login, { USER_STORAGE_KEY } from "./pages/Login";
 import LoadingScreen from "./components/LoadingScreen";
 import { pingHealth } from "./services/api";
 import { CheckCircle2, AlertTriangle } from "lucide-react";
@@ -18,13 +20,14 @@ const NAV = [
   { to: "/videos", label: "Select Lesson" },
   { to: "/listening", label: "Listening" },
   { to: "/reading", label: "Reading" },
+  { to: "/news", label: "News" },
   { to: "/exploration", label: "Explore" },
   { to: "/vocab", label: "Vocabulary" },
   { to: "/flashcards", label: "Flashcards" },
   { to: "/analytics", label: "Analytics" },
 ];
 
-function AppInner() {
+function AppInner({ currentUser, onLogout }) {
   const { status, saveToast } = useLesson();
 
   return (
@@ -65,6 +68,17 @@ function AppInner() {
             {n.label}
           </NavLink>
         ))}
+
+        {/* Tên user + nút đăng xuất */}
+        <div className="ml-auto flex items-center gap-2">
+          <span className="text-xs text-slate-400 font-medium">👤 {currentUser}</span>
+          <button
+            onClick={onLogout}
+            className="rounded-lg px-2.5 py-1.5 text-xs text-slate-500 hover:bg-red-50 hover:text-red-500 transition-colors"
+          >
+            Đăng xuất
+          </button>
+        </div>
       </nav>
 
       <Routes>
@@ -72,6 +86,7 @@ function AppInner() {
         <Route path="/videos" element={<VideoSelection />} />
         <Route path="/listening" element={<ListeningWorkspace />} />
         <Route path="/reading" element={<Reading />} />
+        <Route path="/news" element={<NewsReader />} />
         <Route path="/exploration" element={<IELTSExploration />} />
         <Route path="/vocab" element={<VocabBank />} />
         <Route path="/flashcards" element={<Flashcards />} />
@@ -120,11 +135,25 @@ function ColdStartGate({ children }) {
 }
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(
+    () => localStorage.getItem(USER_STORAGE_KEY) || null
+  );
+
+  if (!currentUser) {
+    return <Login onLogin={setCurrentUser} />;
+  }
+
   return (
     <ColdStartGate>
-      <LessonProvider>
+      <LessonProvider currentUser={currentUser}>
         <BrowserRouter>
-          <AppInner />
+          <AppInner
+            currentUser={currentUser}
+            onLogout={() => {
+              localStorage.removeItem(USER_STORAGE_KEY);
+              setCurrentUser(null);
+            }}
+          />
         </BrowserRouter>
       </LessonProvider>
     </ColdStartGate>

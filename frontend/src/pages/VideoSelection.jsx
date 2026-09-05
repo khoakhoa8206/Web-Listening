@@ -66,6 +66,13 @@ export default function VideoSelection() {
   const [modalChecking, setModalChecking] = useState(false);
   const [modalError, setModalError] = useState(null);
 
+  // News feature — tab nhập bài báo (link / paste text / upload file)
+  const [newsMode, setNewsMode] = useState(false);
+  const [newsInput, setNewsInput] = useState("");
+  const [newsFile, setNewsFile] = useState(null);
+  const [newsLoading, setNewsLoading] = useState(false);
+  const [newsError, setNewsError] = useState(null);
+
   // Phần 6.1 — Luồng chính lấy transcript: lấy link mở sẵn sang youtubetotranscript.com cho đúng video.
   // Vẫn thử tự động lấy transcript (checkTranscript) song song, âm thầm — nếu may mắn thành công thì
   // tự điền sẵn để đỡ phải dán tay, nhưng KHÔNG bắt buộc, không chặn nút bấm nếu thất bại.
@@ -207,6 +214,28 @@ export default function VideoSelection() {
           Enter a new lesson link or search for real YouTube videos with captions.
         </p>
 
+        {/* Tab switcher: YouTube | Add a newspaper */}
+        <div className="mb-6 flex gap-2">
+          <button
+            onClick={() => setNewsMode(false)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              !newsMode ? "bg-pink-400 text-white" : "bg-slate-100 text-slate-600 hover:bg-pink-50"
+            }`}
+          >
+            🎧 YouTube Lesson
+          </button>
+          <button
+            onClick={() => setNewsMode(true)}
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+              newsMode ? "bg-pink-400 text-white" : "bg-slate-100 text-slate-600 hover:bg-pink-50"
+            }`}
+          >
+            📰 Add a newspaper
+          </button>
+        </div>
+
+        {!newsMode ? (
+        <>
         {/* ================= Khu vực 1: Tự nhập bài học bằng Link ================= */}
         <div className="mb-8 rounded-xl bg-white p-5 shadow-sm">
           <p className="mb-3 text-sm font-semibold text-slate-900">Add Lesson by Link</p>
@@ -472,6 +501,112 @@ export default function VideoSelection() {
               </button>
             ))}
           </div>
+        )}
+        </>
+        ) : (
+        <div className="flex flex-col gap-5 max-w-2xl">
+          <p className="text-sm text-slate-500">
+            Nhập link bài báo, dán nội dung văn bản, hoặc upload file (PDF, Word, TXT).
+            AI sẽ xử lý và mở bài báo ở trang <strong>News</strong> để bạn đọc tương tác.
+          </p>
+
+          {/* Option 1: Link */}
+          <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Link bài báo
+            </label>
+            <input
+              type="url"
+              placeholder="https://www.bbc.com/news/..."
+              value={newsInput}
+              onChange={(e) => setNewsInput(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-pink-400 focus:outline-none"
+            />
+          </div>
+
+          <div className="text-center text-xs text-slate-400">— hoặc —</div>
+
+          {/* Option 2: Paste text */}
+          <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Dán nội dung bài báo
+            </label>
+            <textarea
+              rows={6}
+              placeholder="Paste toàn bộ nội dung bài báo vào đây..."
+              value={newsInput.startsWith("http") ? "" : newsInput}
+              onChange={(e) => setNewsInput(e.target.value)}
+              className="mt-1 w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-pink-400 focus:outline-none resize-none"
+            />
+          </div>
+
+          <div className="text-center text-xs text-slate-400">— hoặc —</div>
+
+          {/* Option 3: File upload */}
+          <div>
+            <label className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+              Upload file (PDF, DOCX, TXT)
+            </label>
+            <input
+              type="file"
+              accept=".pdf,.doc,.docx,.txt"
+              onChange={(e) => setNewsFile(e.target.files?.[0] || null)}
+              className="mt-1 block text-sm text-slate-500"
+            />
+            {newsFile && (
+              <p className="mt-1 text-xs text-emerald-600">✓ Đã chọn: {newsFile.name}</p>
+            )}
+          </div>
+
+          {newsError && (
+            <p className="text-sm text-red-500">{newsError}</p>
+          )}
+
+          <button
+            disabled={newsLoading || (!newsInput.trim() && !newsFile)}
+            onClick={async () => {
+              setNewsLoading(true);
+              setNewsError(null);
+              try {
+                let textContent = newsInput.trim();
+                if (newsFile) {
+                  // Đọc file TXT thuần; PDF/DOCX sẽ parse ở backend
+                  if (newsFile.name.endsWith(".txt")) {
+                    textContent = await newsFile.text();
+                  } else {
+                    // Gửi file dạng FormData lên backend
+                    const fd = new FormData();
+                    fd.append("file", newsFile);
+                    const res = await fetch(`${import.meta.env.VITE_API_URL || "http://localhost:8787"}/api/news/parse-file`, {
+                      method: "POST",
+                      body: fd,
+                    });
+                    const data = await res.json();
+                    textContent = data.text || "";
+                  }
+                }
+                // Lưu tạm nội dung vào sessionStorage để NewsReader đọc
+                sessionStorage.setItem("news_draft", JSON.stringify({
+                  source: newsFile ? newsFile.name : newsInput.startsWith("http") ? newsInput : "manual",
+                  rawText: textContent,
+                  isUrl: newsInput.startsWith("http") && !newsFile,
+                }));
+                navigate("/news");
+              } catch {
+                setNewsError("Không đọc được nội dung. Thử lại hoặc dán text trực tiếp.");
+              } finally {
+                setNewsLoading(false);
+              }
+            }}
+            className="rounded-xl bg-pink-400 px-6 py-2.5 text-sm font-semibold text-white hover:bg-pink-500 disabled:opacity-50 flex items-center gap-2 self-start"
+          >
+            {newsLoading ? (
+              <><Loader2 className="h-4 w-4 animate-spin" /> Đang xử lý...</>
+            ) : (
+              "📖 Mở bài báo"
+            )}
+          </button>
+        </div>
         )}
       </div>
 

@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { useLesson } from "../context/LessonContext";
 import { saveProgress } from "../services/api";
+import KeyboardShortcutsPanel from "../components/KeyboardShortcutsPanel";
+import { useKeyboardShortcuts } from "../hooks/useKeyboardShortcuts";
 
 function normalize(str) {
   return String(str)
@@ -93,7 +95,7 @@ const Blank = React.forwardRef(function Blank(
 
 export default function ListeningWorkspace() {
   const navigate = useNavigate();
-  const { lessonId, videoUrl, title, dictation, status, exportLessonAsJSON, saveLessonToLocalStorage } = useLesson();
+  const { lessonId, videoUrl, title, dictation, status, exportLessonAsJSON, saveLessonToLocalStorage, resetLesson } = useLesson();
 
   const playerRef = useRef(null);
   const ytPlayerInstance = useRef(null);
@@ -106,6 +108,9 @@ export default function ListeningWorkspace() {
   const [speed, setSpeed] = useState(1);
   const [answers, setAnswers] = useState({});
   const [isChecked, setIsChecked] = useState(false);
+
+  // Yêu cầu 4 — Phím tắt bàn phím (lưu trong localStorage)
+  const { shortcuts, updateShortcut, resetShortcuts } = useKeyboardShortcuts();
 
   // Reset trạng thái "bắt đầu" mỗi khi có bài học mới
   useEffect(() => {
@@ -188,6 +193,57 @@ export default function ListeningWorkspace() {
     setSpeed(rate);
     ytPlayerInstance.current?.setPlaybackRate?.(rate);
   };
+
+  // -- Yêu cầu 4: Điều khiển player bằng phím tắt -------------------------
+  const togglePlay = useCallback(() => {
+    const player = ytPlayerInstance.current;
+    if (!player) return;
+    // YT.PlayerState: PLAYING = 1, PAUSED = 2 (0 = chưa bắt đầu / ended = 0)
+    if (player.getPlayerState?.() === 1) player.pauseVideo();
+    else player.playVideo();
+  }, []);
+
+  const goPrevSentence = useCallback(() => {
+    if (!dictation?.length) return;
+    const idx = dictation.findIndex((s) => s.id === activeSentenceId);
+    const target = dictation[Math.max(0, idx - 1)];
+    if (target) {
+      setActiveSentenceId(target.id);
+      seekToSentence(target.id);
+    }
+  }, [dictation, activeSentenceId, seekToSentence]);
+
+  const goNextSentence = useCallback(() => {
+    if (!dictation?.length) return;
+    const idx = dictation.findIndex((s) => s.id === activeSentenceId);
+    const target = dictation[Math.min(dictation.length - 1, idx + 1)];
+    if (target) {
+      setActiveSentenceId(target.id);
+      seekToSentence(target.id);
+    }
+  }, [dictation, activeSentenceId, seekToSentence]);
+
+  // Lắng nghe phím tắt trên toàn trang (bỏ qua khi đang gõ vào ô input/textarea)
+  useEffect(() => {
+    function handleGlobalKey(e) {
+      if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA" || e.target.isContentEditable) return;
+      const key = e.key === " " ? "Space" : e.key;
+
+      if (key === shortcuts.togglePlay) {
+        e.preventDefault();
+        togglePlay();
+      } else if (key === shortcuts.prevSentence) {
+        e.preventDefault();
+        goPrevSentence();
+      } else if (key === shortcuts.nextSentence) {
+        e.preventDefault();
+        goNextSentence();
+      }
+    }
+
+    window.addEventListener("keydown", handleGlobalKey);
+    return () => window.removeEventListener("keydown", handleGlobalKey);
+  }, [shortcuts, togglePlay, goPrevSentence, goNextSentence]);
 
   // -- Dictation logic -----------------------------------------------------
   const handleChange = (id, value) => {
@@ -327,7 +383,24 @@ export default function ListeningWorkspace() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[420px_1fr] lg:items-start">
+      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+        {/* Header: tiêu đề bài + nút thoát (Yêu cầu 2) */}
+        <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
+          <h2 className="text-lg font-semibold text-slate-800 truncate">{title}</h2>
+          <button
+            onClick={() => {
+              if (window.confirm("Thoát bài đang làm? Tiến độ chưa lưu sẽ mất.")) {
+                resetLesson();
+                navigate("/videos");
+              }
+            }}
+            className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-500 hover:border-red-300 hover:text-red-500 transition-colors"
+          >
+            ✕ Thoát bài
+          </button>
+        </div>
+
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-6 lg:grid-cols-[420px_1fr] lg:items-start">
         {/* LEFT — Video player */}
         <aside className="lg:sticky lg:top-6">
           <div className="rounded-xl bg-white p-4 shadow-sm">
@@ -372,6 +445,13 @@ export default function ListeningWorkspace() {
                   Normal speed (1x)
                 </button>
               </div>
+
+              {/* Yêu cầu 4 — Cài đặt phím tắt */}
+              <KeyboardShortcutsPanel
+                shortcuts={shortcuts}
+                onUpdate={updateShortcut}
+                onReset={resetShortcuts}
+              />
             </div>
           </div>
 
@@ -491,6 +571,7 @@ export default function ListeningWorkspace() {
             )}
           </div>
         </section>
+        </div>
       </div>
     </div>
   );

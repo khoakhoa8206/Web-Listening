@@ -10,15 +10,23 @@ import {
 } from "lucide-react";
 import { useLesson } from "../context/LessonContext";
 import { saveProgress } from "../services/api";
+import { useHighlight } from "../hooks/useHighlight";
+import HighlightToolbar from "../components/HighlightToolbar";
 
 const TF_OPTIONS = ["True", "False", "Not Given"];
 
 export default function Reading() {
   const navigate = useNavigate();
-  const { lessonId, status, title, readingPassage } = useLesson();
+  const { lessonId, status, title, readingPassage, resetLesson } = useLesson();
   const [answers, setAnswers] = useState({});
   const startTimeRef = useRef(Date.now());
   const savedRef = useRef(false);
+
+  // Yêu cầu 3 — Highlight đoạn văn (lưu theo lessonId)
+  const articleRef = useRef(null);
+  const { highlights, addHighlight } = useHighlight(
+    lessonId ? `highlights_reading_${lessonId}` : null
+  );
 
   const questions = readingPassage?.questions || [];
 
@@ -79,30 +87,70 @@ export default function Reading() {
     return q.type === "mcq" ? given === q.correctIndex : given === q.answer;
   }).length;
 
+  // Yêu cầu 3 — Render đoạn văn kèm các đoạn đã highlight (bằng <mark> màu tương ứng)
+  function renderPassageWithHighlights(text, highlightList) {
+    if (!highlightList.length) return text;
+    const escaped = highlightList
+      .map((h) => String(h.text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .filter(Boolean);
+    if (!escaped.length) return text;
+    const pattern = `\\b(${escaped.join("|")})\\b`;
+    const parts = text.split(new RegExp(pattern, "gi"));
+    return parts.map((part, i) => {
+      const h = highlightList.find(
+        (hh) => hh.text && hh.text.toLowerCase() === part.toLowerCase()
+      );
+      return h ? (
+        <mark key={i} style={{ backgroundColor: h.color }} className="rounded px-0.5">
+          {part}
+        </mark>
+      ) : (
+        <React.Fragment key={i}>{part}</React.Fragment>
+      );
+    });
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-6xl">
         {/* Header */}
-        <div className="mb-6 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-400">
-            <BookOpenText className="h-5 w-5 text-white" strokeWidth={2} />
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-pink-400">
+              <BookOpenText className="h-5 w-5 text-white" strokeWidth={2} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-slate-900">Reading Practice</h1>
+              <p className="text-sm text-slate-500">
+                Based on topic: <span className="font-medium text-slate-700">{title || "—"}</span>
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">Reading Practice</h1>
-            <p className="text-sm text-slate-500">
-              Based on topic: <span className="font-medium text-slate-700">{title || "—"}</span>
-            </p>
-          </div>
+          <button
+            onClick={() => {
+              if (window.confirm("Thoát bài đang làm?")) {
+                resetLesson();
+                navigate("/videos");
+              }
+            }}
+            className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-500 hover:border-red-300 hover:text-red-500 transition-colors"
+          >
+            ✕ Thoát bài
+          </button>
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           {/* Đoạn văn */}
-          <div className="rounded-xl bg-white p-6 shadow-sm lg:sticky lg:top-20 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
+          <div className="relative rounded-xl bg-white p-6 shadow-sm lg:sticky lg:top-20 lg:h-fit lg:max-h-[calc(100vh-6rem)] lg:overflow-y-auto">
             <h2 className="mb-4 text-lg font-bold text-slate-900">{readingPassage.title}</h2>
-            <div className="space-y-4">
+            <HighlightToolbar
+              containerRef={articleRef}
+              onHighlight={({ text, color }) => addHighlight({ text, color })}
+            />
+            <div ref={articleRef} className="space-y-4">
               {readingPassage.paragraphs?.map((p, i) => (
                 <p key={i} className="text-sm leading-relaxed text-slate-700">
-                  {p}
+                  {renderPassageWithHighlights(p, highlights)}
                 </p>
               ))}
             </div>

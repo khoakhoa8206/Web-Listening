@@ -6,6 +6,7 @@ import lessons from "./routes/lessons.js";
 import progress from "./routes/progress.js";
 import vocab from "./routes/vocab.js";
 import speaking from "./routes/speaking.js";
+import news from "./routes/news.js";
 import { initDb } from "./db.js";
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use("/api/lessons", lessons);
 app.use("/api/progress", progress);
 app.use("/api/vocab", vocab);
 app.use("/api/speaking", speaking);
+app.use("/api/news", news);
 
 app.get("/api/health", (req, res) => res.json({ ok: true }));
 
