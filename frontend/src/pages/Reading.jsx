@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { useLesson } from "../context/LessonContext";
 import { saveProgress } from "../services/api";
-import { useHighlight } from "../hooks/useHighlight";
+import { useHighlight, splitByColor } from "../hooks/useHighlight";
 import HighlightToolbar from "../components/HighlightToolbar";
 
 const TF_OPTIONS = ["True", "False", "Not Given"];
@@ -88,26 +88,18 @@ export default function Reading() {
   }).length;
 
   // Yêu cầu 3 — Render đoạn văn kèm các đoạn đã highlight (bằng <mark> màu tương ứng)
-  function renderPassageWithHighlights(text, highlightList) {
+  // offset = vị trí đoạn văn này trong textContent của cả khung (các đoạn nối liền nhau)
+  function renderPassageWithHighlights(text, offset, highlightList) {
     if (!highlightList.length) return text;
-    const escaped = highlightList
-      .map((h) => String(h.text || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
-      .filter(Boolean);
-    if (!escaped.length) return text;
-    const pattern = `\\b(${escaped.join("|")})\\b`;
-    const parts = text.split(new RegExp(pattern, "gi"));
-    return parts.map((part, i) => {
-      const h = highlightList.find(
-        (hh) => hh.text && hh.text.toLowerCase() === part.toLowerCase()
-      );
-      return h ? (
-        <mark key={i} style={{ backgroundColor: h.color }} className="rounded px-0.5">
-          {part}
+    return splitByColor(text, offset, highlightList).map((part, i) =>
+      part.color ? (
+        <mark key={i} style={{ backgroundColor: part.color }} className="rounded">
+          {part.text}
         </mark>
       ) : (
-        <React.Fragment key={i}>{part}</React.Fragment>
-      );
-    });
+        <React.Fragment key={i}>{part.text}</React.Fragment>
+      )
+    );
   }
 
   return (
@@ -145,12 +137,16 @@ export default function Reading() {
             <h2 className="mb-4 text-lg font-bold text-slate-900">{readingPassage.title}</h2>
             <HighlightToolbar
               containerRef={articleRef}
-              onHighlight={({ text, color }) => addHighlight({ text, color })}
+              onHighlight={addHighlight}
             />
             <div ref={articleRef} className="space-y-4">
-              {readingPassage.paragraphs?.map((p, i) => (
+              {readingPassage.paragraphs?.map((p, i, all) => (
                 <p key={i} className="text-sm leading-relaxed text-slate-700">
-                  {renderPassageWithHighlights(p, highlights)}
+                  {renderPassageWithHighlights(
+                    p,
+                    all.slice(0, i).reduce((n, q) => n + q.length, 0),
+                    highlights
+                  )}
                 </p>
               ))}
             </div>

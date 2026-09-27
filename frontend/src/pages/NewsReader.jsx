@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Loader2, Volume2, BookMarked, X, AlertTriangle } from "lucide-react";
 import { saveVocab } from "../services/api";
 import { useLesson } from "../context/LessonContext";
-import { useHighlight } from "../hooks/useHighlight";
+import { useHighlight, splitByColor } from "../hooks/useHighlight";
 import HighlightToolbar from "../components/HighlightToolbar";
 
 // Gọi Gemini backend để lấy thông tin một từ
@@ -189,28 +189,32 @@ export default function NewsReader() {
         {/* Highlight toolbar + Nội dung bài báo */}
         <HighlightToolbar
           containerRef={articleRef}
-          onHighlight={({ text, color }) => addHighlight({ text, color })}
+          onHighlight={addHighlight}
         />
         <div ref={articleRef} className="rounded-2xl bg-white p-6 shadow-sm text-base leading-8 text-slate-700 select-text relative">
-          {words.map((token) => {
-            if (!token.isWord) {
-              return <span key={token.id}>{token.text}</span>;
-            }
-            const isHighlighted = highlights.find((h) =>
-              h.text.toLowerCase().includes(token.text.toLowerCase())
-            );
-            return (
-              <span
-                key={token.id}
-                style={isHighlighted ? { backgroundColor: isHighlighted.color } : {}}
-                className={`cursor-pointer rounded hover:bg-pink-100 hover:text-pink-700 transition-colors px-0.5`}
-                onMouseEnter={(e) => handleWordHover(e, token.text)}
-                onMouseLeave={handleWordLeave}
-              >
-                {token.text}
-              </span>
-            );
-          })}
+          {(() => {
+            let offset = 0; // vị trí token trong textContent của khung bài báo
+            return words.map((token) => {
+              const parts = splitByColor(token.text, offset, highlights);
+              offset += token.text.length;
+              const content = parts.map((p, i) =>
+                p.color ? <mark key={i} style={{ backgroundColor: p.color }}>{p.text}</mark> : p.text
+              );
+              if (!token.isWord) {
+                return <span key={token.id}>{content}</span>;
+              }
+              return (
+                <span
+                  key={token.id}
+                  className={`cursor-pointer rounded hover:bg-pink-100 hover:text-pink-700 transition-colors px-0.5`}
+                  onMouseEnter={(e) => handleWordHover(e, token.text)}
+                  onMouseLeave={handleWordLeave}
+                >
+                  {content}
+                </span>
+              );
+            });
+          })()}
         </div>
 
         {/* Liên kết sang các tính năng khác (giống listening) */}
